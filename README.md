@@ -90,7 +90,3 @@ npm run preview      # Preview the production build locally
 3. **Assign Leads** — On the Dashboard, select an agent from the dropdown on any lead card and click **Confirm**.
 4. **Chat Logs** — Click *Chat Log* on a lead card to view or post notes/updates.
 5. **Filter & Sort** — Use the search bar, agent filter, and sort dropdown to narrow down leads.
-
-## License
-
-ISC
