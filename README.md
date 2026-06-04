@@ -1,6 +1,6 @@
 # FriskyTrails CRM
 
-A customer relationship management application for travel agencies to manage client leads and assign them to agents.
+FriskyTrails CRM to manage client leads and assign them to agents.
 
 ## Tech Stack
 
