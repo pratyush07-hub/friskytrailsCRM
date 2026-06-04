@@ -91,14 +91,6 @@ npm run preview      # Preview the production build locally
 4. **Chat Logs** — Click *Chat Log* on a lead card to view or post notes/updates.
 5. **Filter & Sort** — Use the search bar, agent filter, and sort dropdown to narrow down leads.
 
-## Planned Enhancements
-
-- [ ] Persistent backend with database (e.g., PostgreSQL / MongoDB)
-- [ ] Authentication & role-based access
-- [ ] Email notifications for new lead assignments
-- [ ] Lead status pipeline (new → contacted → booked)
-- [ ] RESTful API for frontend-backend integration
-
 ## License
 
 ISC
