@@ -1,63 +1,43 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import toast from "react-hot-toast";
+import React from 'react';
 
-export default function AddAgent({ addAgent }) {
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    name: ''
-  });
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!formData.name) return;
-
-    addAgent(formData);
-    toast.success("Agent added successfully");
-    navigate('/');
+export default function AddAgent({ agents = [], leads = [] }) {
+  // Helper to count leads for a specific agent
+  const getAssignedLeadsCount = (agentId) => {
+    return leads.filter(lead => lead.agentId === agentId).length;
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <div className="bg-white shadow-xl rounded-2xl overflow-hidden">
-        <div className="bg-blue-600 px-6 py-5">
-          <h2 className="text-xl font-bold text-white">Add New Agent</h2>
-          <p className="mt-1 text-blue-100 text-xs">
-            Enter the details of the new agent below to add them to your team.
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="bg-white shadow-xl rounded-xl p-6 border border-gray-100">
+        <div className="border-b border-gray-100 pb-4 mb-6">
+          <h3 className="text-lg font-bold text-gray-900">Current Agents</h3>
+          <p className="text-xs text-gray-500 mt-1">
+            Overview of the active travel agents in your CRM and their current lead loads.
           </p>
         </div>
 
-        <div className="px-6 py-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">Agent Full Name</label>
-              <div className="mt-1">
-                <input
-                  type="text"
-                  name="name"
-                  id="name"
-                  required
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border"
-                  placeholder="e.g. Agent Sarah"
-                />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {agents.map((agent) => {
+            const count = getAssignedLeadsCount(agent.id);
+            return (
+              <div key={agent.id} className="flex items-center justify-between p-4 bg-gray-50/60 hover:bg-gray-50 transition-colors rounded-xl border border-gray-100">
+                <div className="flex items-center space-x-3">
+                  <div className="h-10 w-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-sm">
+                    {agent.name.split(' ').map(n => n[0]).join('')}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">{agent.name}</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${count > 0 ? 'bg-orange-50 text-orange-700' : 'bg-gray-100 text-gray-600'
+                    }`}>
+                    {count} {count === 1 ? 'Lead' : 'Leads'}
+                  </span>
+                </div>
               </div>
-            </div>
-
-            <div className="pt-2">
-              <button
-                type="submit"
-                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-              >
-                Add Agent
-              </button>
-            </div>
-          </form>
+            );
+          })}
         </div>
       </div>
     </div>

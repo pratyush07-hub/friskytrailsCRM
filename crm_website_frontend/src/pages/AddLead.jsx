@@ -16,18 +16,19 @@ export default function AddLead({ addLead }) {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.phone || !formData.age || !formData.origin || !formData.destination) return;
+    if (!formData.name || !formData.phone || !formData.origin || !formData.destination) return;
 
-    addLead(formData);
-    toast.success("Lead added successfully.");
-    navigate('/');
+    const success = await addLead(formData);
+    if (success) {
+      navigate('/');
+    }
   };
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <div className="bg-white shadow-xl rounded-2xl overflow-hidden">
+      <div className="bg-white shadow-xl rounded-xl overflow-hidden">
         <div className="bg-orange-500 px-6 py-5">
           <h2 className="text-xl font-bold text-white">Add New Lead</h2>
           <p className="mt-1 text-orange-100 text-xs">
@@ -61,7 +62,6 @@ export default function AddLead({ addLead }) {
                     type="number"
                     name="age"
                     id="age"
-                    required
                     min="18"
                     value={formData.age}
                     onChange={handleChange}

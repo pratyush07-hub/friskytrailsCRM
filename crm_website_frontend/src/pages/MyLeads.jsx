@@ -1,67 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
-export default function Dashboard({ leads, agents, assignAgent, addNote, deleteNote, updateLead, user }) {
-  const [pendingAssignments, setPendingAssignments] = useState({});
-  const [viewMode, setViewMode] = useState('card'); // 'card' or 'list'
-  const [noteInputs, setNoteInputs] = useState({}); // { [leadId]: 'comment text' }
-  const [expandedNotes, setExpandedNotes] = useState({}); // { [leadId]: true/false }
+export default function MyLeads({ leads, addNote, deleteNote, user }) {
+  const [viewMode, setViewMode] = useState('card');
+  const [noteInputs, setNoteInputs] = useState({});
+  const [expandedNotes, setExpandedNotes] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterAgent, setFilterAgent] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
 
-  // Modal editing state
-  const [editingLead, setEditingLead] = useState(null);
-  const [modalData, setModalData] = useState({
-    name: '',
-    phone: '',
-    age: '',
-    origin: '',
-    destination: ''
-  });
-
-  const isAdmin = user && user.isAdmin;
-
-  useEffect(() => {
-    if (editingLead) {
-      setModalData({
-        name: editingLead.name,
-        phone: editingLead.phone,
-        age: editingLead.age,
-        origin: editingLead.origin,
-        destination: editingLead.destination
-      });
-    }
-  }, [editingLead]);
-
-  const handleModalSubmit = async (e) => {
-    e.preventDefault();
-    if (!editingLead) return;
-    const success = await updateLead(editingLead.id, modalData);
-    if (success) {
-      setEditingLead(null);
-    }
-  };
-
-  const getAgentLeadCount = (agentId) => {
-    return leads.filter((lead) => lead.agentId === agentId).length;
-  };
-
-  const handleSelectChange = (leadId, value) => {
-    setPendingAssignments({
-      ...pendingAssignments,
-      [leadId]: value
-    });
-  };
-
-  const handleConfirm = (leadId) => {
-    const selectedAgentId = pendingAssignments[leadId];
-    if (selectedAgentId !== undefined) {
-      assignAgent(leadId, selectedAgentId);
-      const newPending = { ...pendingAssignments };
-      delete newPending[leadId];
-      setPendingAssignments(newPending);
-    }
-  };
+  // Filter leads to ONLY those assigned to the current user
+  const myLeads = leads.filter(lead => lead.agentId === user.id);
 
   const toggleNotes = (leadId) => {
     setExpandedNotes(prev => ({
@@ -77,29 +24,16 @@ export default function Dashboard({ leads, agents, assignAgent, addNote, deleteN
     setNoteInputs(prev => ({ ...prev, [leadId]: '' }));
   };
 
-  // Metrics calculations
-  const totalLeads = leads.length;
-  const assignedLeads = leads.filter(lead => lead.agentId).length;
-  const unassignedLeads = totalLeads - assignedLeads;
+  // Metrics for My Leads
+  const totalMyLeads = myLeads.length;
 
 
-
-  // Filter logic
-  const filteredLeads = leads.filter((lead) => {
-    const agentName = agents.find((a) => a.id === lead.agentId)?.name || '';
-    const matchesSearch =
-      lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  // Search logic
+  const filteredLeads = myLeads.filter((lead) => {
+    return lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       lead.phone.includes(searchQuery) ||
       lead.origin.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lead.destination.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      agentName.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesAgent =
-      filterAgent === 'all' ||
-      (filterAgent === 'unassigned' && !lead.agentId) ||
-      lead.agentId === filterAgent;
-
-    return matchesSearch && matchesAgent;
+      lead.destination.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
   // Sort logic
@@ -125,9 +59,9 @@ export default function Dashboard({ leads, agents, assignAgent, addNote, deleteN
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="sm:flex sm:items-center justify-between">
         <div className="sm:flex-auto">
-          <h1 className="text-3xl font-semibold text-gray-900 tracking-tight">Leads Dashboard</h1>
+          <h1 className="text-3xl font-semibold text-gray-900 tracking-tight">My Leads</h1>
           <p className="mt-2 text-sm text-gray-600">
-            Monitor incoming client travel requests and assign them to your team of agents.
+            Manage and update the client travel requests assigned directly to you.
           </p>
         </div>
         <div className="mt-4 sm:mt-0 flex items-center space-x-2 bg-gray-200/60 p-1 rounded-xl">
@@ -153,27 +87,11 @@ export default function Dashboard({ leads, agents, assignAgent, addNote, deleteN
       </div>
 
       {/* Metrics Dashboard */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 mt-8">
+      <div className="grid grid-cols-1 mt-8">
         {/* Total Leads Card */}
         <div className="bg-white overflow-hidden shadow-sm rounded-xl border border-gray-100 p-6">
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Total Leads</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{totalLeads}</p>
-        </div>
-
-        {/* Assigned Leads Card */}
-        <div className="bg-white overflow-hidden shadow-sm rounded-xl border border-gray-100 p-6">
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Assigned</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">
-            {assignedLeads} <span className="text-xs text-gray-400 font-normal">({totalLeads > 0 ? Math.round((assignedLeads / totalLeads) * 100) : 0}%)</span>
-          </p>
-        </div>
-
-        {/* Unassigned Leads Card */}
-        <div className="bg-white overflow-hidden shadow-sm rounded-xl border border-gray-100 p-6">
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Unassigned</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">
-            {unassignedLeads} <span className="text-xs text-gray-400 font-normal">({totalLeads > 0 ? Math.round((unassignedLeads / totalLeads) * 100) : 0}%)</span>
-          </p>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">My Active Leads</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{totalMyLeads}</p>
         </div>
       </div>
 
@@ -187,7 +105,7 @@ export default function Dashboard({ leads, agents, assignAgent, addNote, deleteN
           </div>
           <input
             type="text"
-            placeholder="Search by name, phone, origin, destination, or agent..."
+            placeholder="Search by name, phone, origin, or destination..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 sm:text-sm bg-gray-50/50"
@@ -195,26 +113,6 @@ export default function Dashboard({ leads, agents, assignAgent, addNote, deleteN
         </div>
 
         <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center space-x-2">
-            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Agent:</span>
-            <select
-              value={filterAgent}
-              onChange={(e) => setFilterAgent(e.target.value)}
-              className="pl-3 pr-8 py-2 text-xs border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 rounded-xl bg-white cursor-pointer text-gray-700 font-medium"
-            >
-              <option value="all">All Agents</option>
-              <option value="unassigned">Unassigned Only</option>
-              {agents.map((agent) => {
-                const count = getAgentLeadCount(agent.id);
-                return (
-                  <option key={agent.id} value={agent.id}>
-                    {agent.name} ({count} {count === 1 ? 'lead' : 'leads'})
-                  </option>
-                );
-              })}
-            </select>
-          </div>
-
           <div className="flex items-center space-x-2">
             <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Sort:</span>
             <select
@@ -233,13 +131,13 @@ export default function Dashboard({ leads, agents, assignAgent, addNote, deleteN
         </div>
       </div>
 
-      {leads.length === 0 ? (
+      {myLeads.length === 0 ? (
         <div className="mt-8 text-center py-16 bg-white rounded-xl shadow-sm border border-gray-100">
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
-          <h3 className="mt-4 text-lg font-medium text-gray-900">No leads active</h3>
-          <p className="mt-2 text-sm text-gray-500">Get started by creating a new client lead.</p>
+          <h3 className="mt-4 text-lg font-medium text-gray-900">No leads assigned</h3>
+          <p className="mt-2 text-sm text-gray-500">You currently have no leads assigned to you.</p>
         </div>
       ) : sortedLeads.length === 0 ? (
         <div className="mt-8 text-center py-16 bg-white rounded-xl shadow-sm border border-gray-100">
@@ -252,12 +150,6 @@ export default function Dashboard({ leads, agents, assignAgent, addNote, deleteN
       ) : viewMode === 'card' ? (
         <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 items-start">
           {sortedLeads.map((lead) => {
-            const currentValue = pendingAssignments[lead.id] !== undefined
-              ? pendingAssignments[lead.id]
-              : (lead.agentId || '');
-
-            const hasPendingChange = pendingAssignments[lead.id] !== undefined && pendingAssignments[lead.id] !== (lead.agentId || '');
-            const assignedAgent = agents.find(a => a.id === lead.agentId);
             const isNotesExpanded = !!expandedNotes[lead.id];
 
             return (
@@ -272,18 +164,6 @@ export default function Dashboard({ leads, agents, assignAgent, addNote, deleteN
                         <h3 className="text-lg font-bold text-gray-950 group-hover:text-orange-600 transition-colors">
                           {lead.name}
                         </h3>
-                        {isAdmin && (
-                          <button
-                            onClick={() => setEditingLead(lead)}
-                            className="text-gray-400 hover:text-orange-600 cursor-pointer p-1 rounded transition-colors"
-                            title="Edit Lead"
-                          >
-                            <svg style={{ width: '13px', height: '13px', stroke: 'currentColor' }} fill="none" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                              <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                            </svg>
-                          </button>
-                        )}
                       </div>
                       <span className="text-xs text-gray-500 block mt-0.5">{lead.phone}</span>
                     </div>
@@ -308,46 +188,8 @@ export default function Dashboard({ leads, agents, assignAgent, addNote, deleteN
                 </div>
 
                 <div className="mt-6 pt-4 border-t border-gray-100 space-y-4">
-                  <div>
-                    <span className="block text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-2">
-                      {assignedAgent ? 'Assigned To' : 'Assign Lead'}
-                    </span>
-
-                    {isAdmin ? (
-                      <div className="flex items-center space-x-2">
-                        <select
-                          className="block w-full pl-3 pr-10 py-2 text-sm border-gray-200 focus:outline-none focus:ring-orange-500 focus:border-orange-500 rounded-xl bg-white border cursor-pointer text-gray-700"
-                          value={currentValue}
-                          onChange={(e) => handleSelectChange(lead.id, e.target.value)}
-                        >
-                          <option value="">Unassigned</option>
-                          {agents.map((agent) => {
-                            const count = getAgentLeadCount(agent.id);
-                            return (
-                              <option key={agent.id} value={agent.id}>
-                                {agent.name} ({count} {count === 1 ? 'lead' : 'leads'})
-                              </option>
-                            );
-                          })}
-                        </select>
-                        {hasPendingChange && (
-                          <button
-                            onClick={() => handleConfirm(lead.id)}
-                            className="inline-flex items-center px-4 py-2 border border-transparent text-xs font-semibold rounded-xl shadow-sm text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors cursor-pointer"
-                          >
-                            Confirm
-                          </button>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="text-xs font-semibold text-gray-700 dark:text-slate-200 bg-gray-50/60 dark:bg-slate-900/50 px-3 py-2 rounded-lg border border-gray-100 dark:border-slate-800">
-                        {assignedAgent ? assignedAgent.name : 'Unassigned'}
-                      </div>
-                    )}
-                  </div>
-
                   {/* Notes / Chat logs section */}
-                  <div className="border-t border-gray-100 pt-3">
+                  <div>
                     <button
                       onClick={() => toggleNotes(lead.id)}
                       className="text-xs text-orange-600 hover:text-orange-700 font-semibold flex items-center space-x-1 cursor-pointer"
@@ -416,12 +258,6 @@ export default function Dashboard({ leads, agents, assignAgent, addNote, deleteN
       ) : (
         <div className="mt-8 space-y-4">
           {sortedLeads.map((lead) => {
-            const currentValue = pendingAssignments[lead.id] !== undefined
-              ? pendingAssignments[lead.id]
-              : (lead.agentId || '');
-
-            const hasPendingChange = pendingAssignments[lead.id] !== undefined && pendingAssignments[lead.id] !== (lead.agentId || '');
-            const assignedAgent = agents.find(a => a.id === lead.agentId);
             const isNotesExpanded = !!expandedNotes[lead.id];
 
             return (
@@ -434,18 +270,6 @@ export default function Dashboard({ leads, agents, assignAgent, addNote, deleteN
                     <div>
                       <div className="flex items-center space-x-2">
                         <h3 className="text-base font-bold text-gray-950">{lead.name}</h3>
-                        {isAdmin && (
-                          <button
-                            onClick={() => setEditingLead(lead)}
-                            className="text-gray-400 hover:text-orange-600 cursor-pointer p-1 rounded transition-colors"
-                            title="Edit Lead"
-                          >
-                            <svg style={{ width: '13px', height: '13px', stroke: 'currentColor' }} fill="none" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                              <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                            </svg>
-                          </button>
-                        )}
                       </div>
                       <div className="flex space-x-2 text-xs text-gray-500 mt-0.5">
                         <span>Age: {lead.age}</span>
@@ -468,37 +292,9 @@ export default function Dashboard({ leads, agents, assignAgent, addNote, deleteN
                   </div>
 
                   <div className="flex items-center space-x-2 sm:min-w-[240px] justify-end">
-                    {isAdmin ? (
-                      <div className="w-full max-w-[180px]">
-                        <select
-                          className="block w-full pl-3 pr-10 py-1.5 text-xs border-gray-200 focus:outline-none focus:ring-orange-500 focus:border-orange-500 rounded-xl bg-white border cursor-pointer text-gray-700"
-                          value={currentValue}
-                          onChange={(e) => handleSelectChange(lead.id, e.target.value)}
-                        >
-                          <option value="">Unassigned</option>
-                          {agents.map((agent) => {
-                            const count = getAgentLeadCount(agent.id);
-                            return (
-                              <option key={agent.id} value={agent.id}>
-                                {agent.name} ({count} {count === 1 ? 'lead' : 'leads'})
-                              </option>
-                            );
-                          })}
-                        </select>
-                      </div>
-                    ) : (
-                      <div className="text-xs font-semibold text-gray-700 dark:text-slate-200 bg-gray-50/60 dark:bg-slate-900/50 px-3 py-1.5 rounded-lg border border-gray-100 dark:border-slate-800 min-w-[120px] text-center">
-                        {assignedAgent ? assignedAgent.name : 'Unassigned'}
-                      </div>
-                    )}
-                    {isAdmin && hasPendingChange && (
-                      <button
-                        onClick={() => handleConfirm(lead.id)}
-                        className="inline-flex items-center px-3.5 py-1.5 border border-transparent text-xs font-semibold rounded-xl shadow-sm text-white bg-orange-600 hover:bg-orange-700 focus:outline-none cursor-pointer"
-                      >
-                        Confirm
-                      </button>
-                    )}
+                    <div className="text-xs font-semibold text-orange-700 bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-100 min-w-[120px] text-center">
+                      Assigned to You
+                    </div>
                     <button
                       onClick={() => toggleNotes(lead.id)}
                       className="text-xs text-orange-600 hover:text-orange-700 font-semibold px-2 py-1 bg-orange-50 rounded-lg cursor-pointer"
@@ -563,94 +359,6 @@ export default function Dashboard({ leads, agents, assignAgent, addNote, deleteN
               </div>
             );
           })}
-        </div>
-      )}
-
-      {/* Edit Lead Modal */}
-      {editingLead && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-lg w-full overflow-hidden border border-gray-100 dark:border-slate-700">
-            <div className="bg-orange-500 px-6 py-4 flex justify-between items-center">
-              <h3 className="text-lg font-bold text-white">Edit Client Lead</h3>
-              <button
-                onClick={() => setEditingLead(null)}
-                className="text-white/80 hover:text-white text-xl cursor-pointer bg-transparent border-0 font-bold"
-              >
-                &times;
-              </button>
-            </div>
-            <form onSubmit={handleModalSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Full Name</label>
-                <input
-                  type="text"
-                  required
-                  value={modalData.name}
-                  onChange={(e) => setModalData({ ...modalData, name: e.target.value })}
-                  className="w-full text-sm py-2 px-3 border border-gray-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-700 bg-white"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Age</label>
-                  <input
-                    type="number"
-                    min="18"
-                    value={modalData.age}
-                    onChange={(e) => setModalData({ ...modalData, age: e.target.value })}
-                    className="w-full text-sm py-2 px-3 border border-gray-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-700 bg-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Phone Number</label>
-                  <input
-                    type="tel"
-                    required
-                    value={modalData.phone}
-                    onChange={(e) => setModalData({ ...modalData, phone: e.target.value })}
-                    className="w-full text-sm py-2 px-3 border border-gray-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-700 bg-white"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Origin</label>
-                  <input
-                    type="text"
-                    required
-                    value={modalData.origin}
-                    onChange={(e) => setModalData({ ...modalData, origin: e.target.value })}
-                    className="w-full text-sm py-2 px-3 border border-gray-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-700 bg-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Destination</label>
-                  <input
-                    type="text"
-                    required
-                    value={modalData.destination}
-                    onChange={(e) => setModalData({ ...modalData, destination: e.target.value })}
-                    className="w-full text-sm py-2 px-3 border border-gray-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-700 bg-white"
-                  />
-                </div>
-              </div>
-              <div className="pt-4 flex justify-end space-x-2">
-                <button
-                  type="button"
-                  onClick={() => setEditingLead(null)}
-                  className="px-4 py-2 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 rounded-lg text-sm font-semibold hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm font-semibold cursor-pointer"
-                >
-                  Save Changes
-                </button>
-              </div>
-            </form>
-          </div>
         </div>
       )}
     </div>
