@@ -45,12 +45,5 @@ module.exports = {
   },
   findAgents: async () => {
     return User.find({ isAdmin: false });
-  },
-  updateAgent: async (id, data) => {
-    return User.findOneAndUpdate(
-      { _id: id, isAdmin: false },
-      { $set: data },
-      { new: true }
-    );
   }
 };

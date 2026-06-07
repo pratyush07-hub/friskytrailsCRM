@@ -7,47 +7,54 @@ A customer relationship management application for travel agencies to manage cli
 | Layer    | Technology                                    |
 | -------- | --------------------------------------------- |
 | Frontend | React 19, Vite 8, Tailwind CSS 4, React Router 7 |
-| Backend  | Node.js (placeholder — ready for expansion)   |
+| Backend  | Node.js, Express, MongoDB (Mongoose), JWT     |
 | Tooling  | ESLint 10                                     |
 
 ## Features
 
+- **Authentication** — JWT-based secure login, with separate roles for Admins and Agents.
 - **Lead Management** — Add client leads with name, phone, age, origin, and destination details.
-- **Agent Management** — Create and manage travel agents.
-- **Assignment System** — Assign/unassign leads to agents with a single click.
-- **Communication Logs** — Post and view notes/updates per lead, authored by the assigned agent.
+- **Agent Dashboard** — Dedicated 'My Leads' page for agents to only see leads assigned to them.
+- **Assignment System** — Admins can assign or unassign leads to agents with a single click.
+- **Communication Logs** — Post and view notes/updates per lead, with authorship tracking and secure deletion permissions.
 - **Search & Filter** — Search leads by name, phone, origin, destination, or agent name; filter by agent or unassigned status.
-- **Sorting** — Sort leads by newest, oldest, name (A–Z/Z–A), or age.
-- **Dashboard Metrics** — Quick-view cards for total leads, assigned/unassigned counts, and top destination.
+- **Dashboard Metrics** — Quick-view cards for total leads, and assigned/unassigned counts.
 - **Dual View Modes** — Toggle between card grid and clean list layout.
 
 ## Project Structure
 
-```
+```text
 FriskyTrails CRM/
-├── backend/                          # Node.js backend (placeholder)
+├── backend/                          # Express Server & MongoDB API
+│   ├── config/                       # Environment variables config
+│   ├── controllers/                  # Route handlers (auth, leads, agents)
+│   ├── db/                           # Mongoose connection logic
+│   ├── middleware/                   # JWT auth & admin guard middleware
+│   ├── models/                       # Mongoose Schemas (User, Lead, Notes)
+│   ├── routes/                       # Express API routing definitions
+│   ├── services/                     # Business logic and database operations
+│   ├── utils/                        # Shared utility functions
+│   ├── .env.example                  # Template for environment variables
+│   ├── index.js                      # Main Express server entry point
 │   └── package.json
 ├── crm_website_frontend/             # React + Vite frontend
-│   ├── dist/                         # Production build output
-│   │   └── assets/
-│   │       ├── index-BiuoHaOp.js
-│   │       └── index-CZN4X-4t.css
 │   ├── public/
-│   │   └── favicon.svg
+│   │   └── logo.webp
 │   ├── src/
 │   │   ├── components/
 │   │   │   └── Navbar.jsx            # Sticky navigation bar with route links
 │   │   ├── pages/
-│   │   │   ├── Dashboard.jsx         # Main dashboard: metrics, search, filters, lead cards
-│   │   │   ├── AddLead.jsx           # Form to add new client leads
-│   │   │   └── AddAgent.jsx          # Form to add new agents
-│   │   ├── App.jsx                   # Root component: state management & routing
+│   │   │   ├── Dashboard.jsx         # Global admin dashboard: metrics, filtering, assignments
+│   │   │   ├── MyLeads.jsx           # Personalized view exclusively for assigned agents
+│   │   │   ├── Login.jsx             # Authentication login portal
+│   │   │   ├── AddLead.jsx           # Form to add new client leads (Admin only)
+│   │   │   └── AddAgent.jsx          # Form to add new agents (Admin only)
+│   │   ├── App.jsx                   # Root component: state management, auth token tracking & routing
 │   │   ├── index.css                 # Tailwind import & global styles
 │   │   └── main.jsx                  # App entry point
 │   ├── eslint.config.js
 │   ├── index.html
 │   ├── package.json
-│   ├── README.md
 │   └── vite.config.js                # Vite config with Tailwind & React plugins
 ├── .gitignore
 └── README.md                         # This file

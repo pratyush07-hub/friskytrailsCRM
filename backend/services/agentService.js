@@ -6,15 +6,7 @@ async function getAgents() {
   return agents.map(formatDoc);
 }
 
-async function updateAgent(id, data) {
-  const result = await User.updateAgent(id, data);
-  if (!result) {
-    throw new Error("Agent not found");
-  }
-  return formatDoc(result);
-}
 
 module.exports = {
-  getAgents,
-  updateAgent
+  getAgents
 };

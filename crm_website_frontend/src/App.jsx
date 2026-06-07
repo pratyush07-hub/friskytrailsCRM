@@ -106,29 +106,6 @@ function App() {
     }
   };
 
-  const addAgent = async (newAgent) => {
-    try {
-      const response = await fetch(`${API_URL}/agents`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(newAgent),
-      });
-      if (response.ok) {
-        const savedAgent = await response.json();
-        setAgents((prev) => [...prev, savedAgent]);
-        toast.success("Agent added successfully.");
-        return true;
-      } else {
-        toast.error("Failed to add agent.");
-        return false;
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error("Server connection error.");
-      return false;
-    }
-  };
-
   const assignAgent = async (leadId, agentId) => {
     try {
       const response = await fetch(`${API_URL}/leads/${leadId}/assign`, {
@@ -216,36 +193,6 @@ function App() {
     }
   };
 
-  const updateAgent = async (agentId, updatedAgent) => {
-    try {
-      const response = await fetch(`${API_URL}/agents/${agentId}`, {
-        method: 'PUT',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(updatedAgent),
-      });
-      if (response.ok) {
-        const savedAgent = await response.json();
-        setAgents((prev) => prev.map(agent => agent.id === agentId ? savedAgent : agent));
-        const leadsRes = await fetch(`${API_URL}/leads`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (leadsRes.ok) {
-          const leadsData = await leadsRes.json();
-          setLeads(leadsData);
-        }
-        toast.success("Agent updated successfully.");
-        return true;
-      } else {
-        toast.error("Failed to update agent.");
-        return false;
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error("Server connection error.");
-      return false;
-    }
-  };
-
   // If not logged in, intercept and show Login Page
   if (!token) {
     return (
@@ -284,7 +231,7 @@ function App() {
             />
             <Route
               path="/agents"
-              element={user.isAdmin ? <AddAgent addAgent={addAgent} agents={agents} leads={leads} updateAgent={updateAgent} /> : <Navigate to="/" replace />}
+              element={user.isAdmin ? <AddAgent agents={agents} leads={leads} /> : <Navigate to="/" replace />}
             />
             {/* Redirect any other path to dashboard */}
             <Route path="*" element={<Navigate to="/" replace />} />
