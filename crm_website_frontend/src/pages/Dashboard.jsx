@@ -359,20 +359,20 @@ export default function Dashboard({ leads, agents, assignAgent, addNote, deleteN
                       <div className="mt-3 space-y-3">
                         <div className="max-h-36 overflow-y-auto space-y-2 pr-1 scrollbar-thin">
                           {(!lead.notes || lead.notes.length === 0) ? (
-                            <p className="text-[11px] text-gray-400 italic">No notes posted yet.</p>
+                            <p className="text-[11px] text-gray-400 dark:text-gray-500 italic">No notes posted yet.</p>
                           ) : (
                             lead.notes.map((note) => {
                               const isMyNote = note.authorId ? note.authorId === user.id : note.author === user.name;
                               return (
-                                <div key={note.id || note._id} className={`${isMyNote ? 'bg-blue-50/60 border border-blue-100/50' : 'bg-gray-50 border border-transparent'} p-2 rounded-lg text-xs transition-colors`}>
-                                  <div className="flex justify-between font-semibold text-[10px] text-gray-500">
-                                    <span className={isMyNote ? 'text-blue-600' : ''}>{note.author} {isMyNote && '(You)'}</span>
+                                <div key={note.id || note._id} className={`${isMyNote ? 'bg-blue-50/60 border border-blue-100/50 dark:bg-blue-900/30 dark:border-blue-800/50' : 'bg-gray-50 border border-transparent dark:bg-slate-800/50'} p-2 rounded-lg text-xs transition-colors`}>
+                                  <div className="flex justify-between font-semibold text-[10px] text-gray-500 dark:text-gray-400">
+                                    <span className={isMyNote ? 'text-blue-600 dark:text-blue-400' : 'dark:text-gray-300'}>{note.author} {isMyNote && '(You)'}</span>
                                     <div className="flex items-center space-x-1.5">
                                       <span>{note.timestamp}</span>
                                       {isMyNote && (
                                         <button 
                                           onClick={() => deleteNote(lead.id, note.id || note._id)} 
-                                          className="text-red-400 hover:text-red-600 cursor-pointer p-0.5 rounded transition-colors"
+                                          className="text-red-400 hover:text-red-600 dark:hover:text-red-400 cursor-pointer p-0.5 rounded transition-colors"
                                           title="Delete note"
                                         >
                                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -383,7 +383,7 @@ export default function Dashboard({ leads, agents, assignAgent, addNote, deleteN
                                       )}
                                     </div>
                                   </div>
-                                  <p className="text-gray-700 mt-0.5">{note.text}</p>
+                                  <p className="text-gray-700 dark:text-slate-200 mt-0.5">{note.text}</p>
                                 </div>
                               );
                             })
@@ -396,7 +396,7 @@ export default function Dashboard({ leads, agents, assignAgent, addNote, deleteN
                             value={noteInputs[lead.id] || ''}
                             onChange={(e) => setNoteInputs({ ...noteInputs, [lead.id]: e.target.value })}
                             onKeyDown={(e) => e.key === 'Enter' && handleSendNote(lead.id)}
-                            className="w-full text-xs py-1.5 px-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500"
+                            className="w-full text-xs py-1.5 px-3 border border-gray-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500"
                           />
                           <button
                             onClick={() => handleSendNote(lead.id)}
@@ -513,20 +513,20 @@ export default function Dashboard({ leads, agents, assignAgent, addNote, deleteN
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="max-h-36 overflow-y-auto space-y-2 pr-1 scrollbar-thin">
                         {(!lead.notes || lead.notes.length === 0) ? (
-                          <p className="text-[11px] text-gray-400 italic">No notes posted yet.</p>
+                          <p className="text-[11px] text-gray-400 dark:text-gray-500 italic">No notes posted yet.</p>
                         ) : (
                           lead.notes.map((note) => {
                             const isMyNote = note.authorId ? note.authorId === user.id : note.author === user.name;
                             return (
-                              <div key={note.id || note._id} className={`${isMyNote ? 'bg-blue-50/60 border border-blue-100/50' : 'bg-gray-50 border border-transparent'} p-2.5 rounded-lg text-xs transition-colors`}>
-                                <div className="flex justify-between font-semibold text-[10px] text-gray-500">
-                                  <span className={isMyNote ? 'text-blue-600' : ''}>{note.author} {isMyNote && '(You)'}</span>
+                              <div key={note.id || note._id} className={`${isMyNote ? 'bg-blue-50/60 border border-blue-100/50 dark:bg-blue-900/30 dark:border-blue-800/50' : 'bg-gray-50 border border-transparent dark:bg-slate-800/50'} p-2.5 rounded-lg text-xs transition-colors`}>
+                                <div className="flex justify-between font-semibold text-[10px] text-gray-500 dark:text-gray-400">
+                                  <span className={isMyNote ? 'text-blue-600 dark:text-blue-400' : 'dark:text-gray-300'}>{note.author} {isMyNote && '(You)'}</span>
                                   <div className="flex items-center space-x-1.5">
                                     <span>{note.timestamp}</span>
                                     {isMyNote && (
                                       <button 
                                         onClick={() => deleteNote(lead.id, note.id || note._id)} 
-                                        className="text-red-400 hover:text-red-600 cursor-pointer p-0.5 rounded transition-colors"
+                                        className="text-red-400 hover:text-red-600 dark:hover:text-red-400 cursor-pointer p-0.5 rounded transition-colors"
                                         title="Delete note"
                                       >
                                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -537,7 +537,7 @@ export default function Dashboard({ leads, agents, assignAgent, addNote, deleteN
                                     )}
                                   </div>
                                 </div>
-                                <p className="text-gray-700 mt-0.5">{note.text}</p>
+                                <p className="text-gray-700 dark:text-slate-200 mt-0.5">{note.text}</p>
                               </div>
                             );
                           })
@@ -548,7 +548,7 @@ export default function Dashboard({ leads, agents, assignAgent, addNote, deleteN
                           placeholder="Type important information..."
                           value={noteInputs[lead.id] || ''}
                           onChange={(e) => setNoteInputs({ ...noteInputs, [lead.id]: e.target.value })}
-                          className="w-full text-xs p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500 resize-none h-16"
+                          className="w-full text-xs p-2 border border-gray-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500 resize-none h-16"
                         />
                         <button
                           onClick={() => handleSendNote(lead.id)}
