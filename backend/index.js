@@ -6,7 +6,9 @@ const apiRoutes = require('./routes');
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: "*"
+}));
 app.use(express.json());
 
 // Mount API routes under /api prefix
