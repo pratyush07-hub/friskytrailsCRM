@@ -94,7 +94,7 @@ async function addNote(id, text, userId) {
   const newNote = {
     id: new mongoose.Types.ObjectId().toString(),
     text: text.trim(),
-    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    timestamp: new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' }),
     author,
     authorId: userId || null
   };
