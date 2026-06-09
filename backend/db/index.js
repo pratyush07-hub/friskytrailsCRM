@@ -5,7 +5,7 @@ async function connectDB() {
   const uri = config.MONGODB_URI;
   if (!uri) {
     console.error("CRITICAL: MONGODB_URI is not set in environment variables!");
-    process.exit(1);
+    return;
   }
 
   try {
@@ -13,7 +13,6 @@ async function connectDB() {
     console.log("Connected to MongoDB successfully via Mongoose (crm_website)!");
   } catch (error) {
     console.error("Failed to connect to MongoDB:", error);
-    process.exit(1);
   }
 }
 
