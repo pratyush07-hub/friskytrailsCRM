@@ -12,19 +12,7 @@ app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps or curl)
     if (!origin) return callback(null, true);
-
-    const allowedPatterns = [
-      /^http:\/\/localhost:\d+$/,
-      /\.vercel\.app$/,
-      /\.onrender\.com$/
-    ];
-
-    const isAllowed = allowedPatterns.some(pattern => pattern.test(origin));
-    if (isAllowed) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
+    callback(null, true);
   },
   credentials: true
 }));
@@ -33,12 +21,16 @@ app.use(express.json());
 // Mount API routes under /api prefix
 app.use('/api', apiRoutes);
 
-// Start server after DB connection
-connectDB().then(() => {
+// Connect to database
+connectDB().catch((error) => {
+  console.error("Critical database connection failure:", error);
+});
+
+// Start server if run directly (e.g. node index.js)
+if (require.main === module) {
   app.listen(config.PORT, () => {
     console.log(`Backend server is running on http://localhost:${config.PORT}`);
   });
-}).catch((error) => {
-  console.error("Critical server startup failure:", error);
-  process.exit(1);
-});
+}
+
+module.exports = app;
