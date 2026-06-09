@@ -30,10 +30,14 @@ export default function MyLeads({ leads, addNote, deleteNote, user }) {
 
   // Search logic
   const filteredLeads = myLeads.filter((lead) => {
-    return lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lead.phone.includes(searchQuery) ||
-      lead.origin.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lead.destination.toLowerCase().includes(searchQuery.toLowerCase());
+    const nameMatch = lead.name ? lead.name.toLowerCase().includes(searchQuery.toLowerCase()) : false;
+    const phoneMatch = lead.phone.includes(searchQuery);
+    const originMatch = lead.origin ? lead.origin.toLowerCase().includes(searchQuery.toLowerCase()) : false;
+    const destMatch = lead.destination ? lead.destination.toLowerCase().includes(searchQuery.toLowerCase()) : false;
+    const sourceMatch = lead.leadSource ? lead.leadSource.toLowerCase().includes(searchQuery.toLowerCase()) : false;
+    const mailMatch = lead.mailId ? lead.mailId.toLowerCase().includes(searchQuery.toLowerCase()) : false;
+
+    return nameMatch || phoneMatch || originMatch || destMatch || sourceMatch || mailMatch;
   });
 
   // Sort logic
@@ -105,7 +109,7 @@ export default function MyLeads({ leads, addNote, deleteNote, user }) {
           </div>
           <input
             type="text"
-            placeholder="Search by name, phone, origin, or destination..."
+            placeholder="Search by name, phone, origin, destination, mail, or source..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 sm:text-sm bg-gray-50/50"
@@ -162,14 +166,23 @@ export default function MyLeads({ leads, addNote, deleteNote, user }) {
                     <div>
                       <div className="flex items-center space-x-2">
                         <h3 className="text-lg font-bold text-gray-950 group-hover:text-orange-600 transition-colors">
-                          {lead.name}
+                          {lead.name || 'Unnamed Lead'}
                         </h3>
                       </div>
-                      <span className="text-xs text-gray-500 block mt-0.5">{lead.phone}</span>
+                      <span className="text-xs text-gray-500 block mt-0.5">
+                        {lead.phone} {lead.mailId && `• ${lead.mailId}`}
+                      </span>
+                      {lead.leadSource && (
+                        <span className="inline-flex items-center mt-1.5 px-2 py-0.5 rounded-md text-[10px] font-medium bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-100/30">
+                          Source: {lead.leadSource}
+                        </span>
+                      )}
                     </div>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-50 text-orange-700">
-                      Age {lead.age}
-                    </span>
+                    {lead.age && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-400">
+                        Age {lead.age}
+                      </span>
+                    )}
                   </div>
 
                   <div className="mt-4 space-y-3">
@@ -269,12 +282,28 @@ export default function MyLeads({ leads, addNote, deleteNote, user }) {
                   <div className="flex items-center space-x-4 min-w-[200px]">
                     <div>
                       <div className="flex items-center space-x-2">
-                        <h3 className="text-base font-bold text-gray-950">{lead.name}</h3>
+                        <h3 className="text-base font-bold text-gray-950">{lead.name || 'Unnamed Lead'}</h3>
                       </div>
-                      <div className="flex space-x-2 text-xs text-gray-500 mt-0.5">
-                        <span>Age: {lead.age}</span>
-                        <span>•</span>
+                      <div className="flex flex-wrap items-center gap-x-2 text-xs text-gray-500 mt-0.5">
+                        {lead.age && (
+                          <>
+                            <span>Age: {lead.age}</span>
+                            <span>•</span>
+                          </>
+                        )}
                         <span>{lead.phone}</span>
+                        {lead.mailId && (
+                          <>
+                            <span>•</span>
+                            <span>{lead.mailId}</span>
+                          </>
+                        )}
+                        {lead.leadSource && (
+                          <>
+                            <span>•</span>
+                            <span className="text-[10px] bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 px-1.5 py-0.5 rounded border border-blue-100/30">Source: {lead.leadSource}</span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

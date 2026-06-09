@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 
 export default function Dashboard({ leads, agents, assignAgent, addNote, deleteNote, updateLead, user }) {
   const [pendingAssignments, setPendingAssignments] = useState({});
@@ -16,7 +17,9 @@ export default function Dashboard({ leads, agents, assignAgent, addNote, deleteN
     phone: '',
     age: '',
     origin: '',
-    destination: ''
+    destination: '',
+    leadSource: '',
+    mailId: ''
   });
 
   const isAdmin = user && user.isAdmin;
@@ -24,18 +27,33 @@ export default function Dashboard({ leads, agents, assignAgent, addNote, deleteN
   useEffect(() => {
     if (editingLead) {
       setModalData({
-        name: editingLead.name,
-        phone: editingLead.phone,
-        age: editingLead.age,
-        origin: editingLead.origin,
-        destination: editingLead.destination
+        name: editingLead.name || '',
+        phone: editingLead.phone || '',
+        age: editingLead.age || '',
+        origin: editingLead.origin || '',
+        destination: editingLead.destination || '',
+        leadSource: editingLead.leadSource || '',
+        mailId: editingLead.mailId || ''
       });
     }
   }, [editingLead]);
 
+  const handleModalPhoneChange = (e) => {
+    const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
+    setModalData(prev => ({ ...prev, phone: val }));
+  };
+
   const handleModalSubmit = async (e) => {
     e.preventDefault();
     if (!editingLead) return;
+    if (!modalData.phone) {
+      toast.error("Phone number is required");
+      return;
+    }
+    if (modalData.phone.length !== 10) {
+      toast.error("Phone number must be exactly 10 digits");
+      return;
+    }
     const success = await updateLead(editingLead.id, modalData);
     if (success) {
       setEditingLead(null);
@@ -270,7 +288,7 @@ export default function Dashboard({ leads, agents, assignAgent, addNote, deleteN
                     <div>
                       <div className="flex items-center space-x-2">
                         <h3 className="text-lg font-bold text-gray-950 group-hover:text-orange-600 transition-colors">
-                          {lead.name}
+                          {lead.name || 'Unnamed Lead'}
                         </h3>
                         {isAdmin && (
                           <button
@@ -285,11 +303,20 @@ export default function Dashboard({ leads, agents, assignAgent, addNote, deleteN
                           </button>
                         )}
                       </div>
-                      <span className="text-xs text-gray-500 block mt-0.5">{lead.phone}</span>
+                      <span className="text-xs text-gray-500 block mt-0.5">
+                        {lead.phone} {lead.mailId && `• ${lead.mailId}`}
+                      </span>
+                      {lead.leadSource && (
+                        <span className="inline-flex items-center mt-1.5 px-2 py-0.5 rounded-md text-[10px] font-medium bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-100/30">
+                          Source: {lead.leadSource}
+                        </span>
+                      )}
                     </div>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-50 text-orange-700">
-                      Age {lead.age}
-                    </span>
+                    {lead.age && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-400">
+                        Age {lead.age}
+                      </span>
+                    )}
                   </div>
 
                   <div className="mt-4 space-y-3">
@@ -433,7 +460,7 @@ export default function Dashboard({ leads, agents, assignAgent, addNote, deleteN
                   <div className="flex items-center space-x-4 min-w-[200px]">
                     <div>
                       <div className="flex items-center space-x-2">
-                        <h3 className="text-base font-bold text-gray-950">{lead.name}</h3>
+                        <h3 className="text-base font-bold text-gray-950">{lead.name || 'Unnamed Lead'}</h3>
                         {isAdmin && (
                           <button
                             onClick={() => setEditingLead(lead)}
@@ -447,10 +474,26 @@ export default function Dashboard({ leads, agents, assignAgent, addNote, deleteN
                           </button>
                         )}
                       </div>
-                      <div className="flex space-x-2 text-xs text-gray-500 mt-0.5">
-                        <span>Age: {lead.age}</span>
-                        <span>•</span>
+                      <div className="flex flex-wrap items-center gap-x-2 text-xs text-gray-500 mt-0.5">
+                        {lead.age && (
+                          <>
+                            <span>Age: {lead.age}</span>
+                            <span>•</span>
+                          </>
+                        )}
                         <span>{lead.phone}</span>
+                        {lead.mailId && (
+                          <>
+                            <span>•</span>
+                            <span>{lead.mailId}</span>
+                          </>
+                        )}
+                        {lead.leadSource && (
+                          <>
+                            <span>•</span>
+                            <span className="text-[10px] bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 px-1.5 py-0.5 rounded border border-blue-100/30">Source: {lead.leadSource}</span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -580,60 +623,82 @@ export default function Dashboard({ leads, agents, assignAgent, addNote, deleteN
               </button>
             </div>
             <form onSubmit={handleModalSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Full Name</label>
-                <input
-                  type="text"
-                  required
-                  value={modalData.name}
-                  onChange={(e) => setModalData({ ...modalData, name: e.target.value })}
-                  className="w-full text-sm py-2 px-3 border border-gray-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-700 bg-white"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="col-span-2">
+                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Full Name</label>
+                  <input
+                    type="text"
+                    value={modalData.name}
+                    onChange={(e) => setModalData({ ...modalData, name: e.target.value })}
+                    className="w-full text-sm py-2 px-3 border border-gray-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-700 bg-white dark:bg-slate-900 dark:text-gray-100"
+                  />
+                </div>
+                <div className="col-span-1">
                   <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Age</label>
                   <input
                     type="number"
-                    min="18"
                     value={modalData.age}
                     onChange={(e) => setModalData({ ...modalData, age: e.target.value })}
-                    className="w-full text-sm py-2 px-3 border border-gray-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-700 bg-white"
+                    className="w-full text-sm py-2 px-3 border border-gray-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-700 bg-white dark:bg-slate-900 dark:text-gray-100"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Phone Number</label>
+                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                    Phone Number <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="tel"
                     required
                     value={modalData.phone}
-                    onChange={(e) => setModalData({ ...modalData, phone: e.target.value })}
-                    className="w-full text-sm py-2 px-3 border border-gray-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-700 bg-white"
+                    onChange={handleModalPhoneChange}
+                    className="w-full text-sm py-2 px-3 border border-gray-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-700 bg-white dark:bg-slate-900 dark:text-gray-100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Mail ID</label>
+                  <input
+                    type="email"
+                    value={modalData.mailId}
+                    onChange={(e) => setModalData({ ...modalData, mailId: e.target.value })}
+                    className="w-full text-sm py-2 px-3 border border-gray-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-700 bg-white dark:bg-slate-900 dark:text-gray-100"
                   />
                 </div>
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Origin</label>
+                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Lead Source</label>
                   <input
                     type="text"
-                    required
-                    value={modalData.origin}
-                    onChange={(e) => setModalData({ ...modalData, origin: e.target.value })}
-                    className="w-full text-sm py-2 px-3 border border-gray-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-700 bg-white"
+                    value={modalData.leadSource}
+                    onChange={(e) => setModalData({ ...modalData, leadSource: e.target.value })}
+                    className="w-full text-sm py-2 px-3 border border-gray-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-700 bg-white dark:bg-slate-900 dark:text-gray-100"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Destination</label>
+                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Origin City</label>
                   <input
                     type="text"
-                    required
-                    value={modalData.destination}
-                    onChange={(e) => setModalData({ ...modalData, destination: e.target.value })}
-                    className="w-full text-sm py-2 px-3 border border-gray-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-700 bg-white"
+                    value={modalData.origin}
+                    onChange={(e) => setModalData({ ...modalData, origin: e.target.value })}
+                    className="w-full text-sm py-2 px-3 border border-gray-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-700 bg-white dark:bg-slate-900 dark:text-gray-100"
                   />
                 </div>
               </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Destination</label>
+                <input
+                  type="text"
+                  value={modalData.destination}
+                  onChange={(e) => setModalData({ ...modalData, destination: e.target.value })}
+                  className="w-full text-sm py-2 px-3 border border-gray-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-700 bg-white dark:bg-slate-900 dark:text-gray-100"
+                />
+              </div>
+
               <div className="pt-4 flex justify-end space-x-2">
                 <button
                   type="button"

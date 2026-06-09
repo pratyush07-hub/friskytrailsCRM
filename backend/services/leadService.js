@@ -8,17 +8,24 @@ async function getLeads() {
   return leads.map(formatDoc);
 }
 
-async function createLead(name, phone, age, origin, destination) {
-  if (!name || !phone || !origin || !destination) {
-    throw new Error("Name, phone, origin, and destination fields are required");
+async function createLead(name, phone, age, origin, destination, leadSource, mailId) {
+  if (!phone) {
+    throw new Error("Phone number is required");
+  }
+
+  const cleanPhone = phone.replace(/\s+/g, '');
+  if (!/^\d{10}$/.test(cleanPhone)) {
+    throw new Error("Phone number must be exactly 10 digits with no spaces");
   }
 
   const lead = {
-    name,
-    phone,
+    name: name || '',
+    phone: cleanPhone,
     age: age ? Number(age) : undefined,
-    origin,
-    destination,
+    origin: origin || '',
+    destination: destination || '',
+    leadSource: leadSource || '',
+    mailId: mailId || '',
     agentId: null,
     notes: []
   };
@@ -28,17 +35,24 @@ async function createLead(name, phone, age, origin, destination) {
   return formatDoc(newLead);
 }
 
-async function updateLead(id, name, phone, age, origin, destination) {
-  if (!name || !phone || !origin || !destination) {
-    throw new Error("Name, phone, origin, and destination fields are required");
+async function updateLead(id, name, phone, age, origin, destination, leadSource, mailId) {
+  if (!phone) {
+    throw new Error("Phone number is required");
+  }
+
+  const cleanPhone = phone.replace(/\s+/g, '');
+  if (!/^\d{10}$/.test(cleanPhone)) {
+    throw new Error("Phone number must be exactly 10 digits with no spaces");
   }
 
   const result = await Lead.updateLead(id, {
-    name,
-    phone,
+    name: name || '',
+    phone: cleanPhone,
     age: age ? Number(age) : undefined,
-    origin,
-    destination
+    origin: origin || '',
+    destination: destination || '',
+    leadSource: leadSource || '',
+    mailId: mailId || ''
   });
 
   if (!result) {

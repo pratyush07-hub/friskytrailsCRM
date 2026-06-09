@@ -26,7 +26,8 @@ const NoteSchema = new mongoose.Schema({
 const LeadSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true
+    required: false,
+    default: ''
   },
   phone: {
     type: String,
@@ -38,11 +39,23 @@ const LeadSchema = new mongoose.Schema({
   },
   origin: {
     type: String,
-    required: true
+    required: false,
+    default: ''
   },
   destination: {
     type: String,
-    required: true
+    required: false,
+    default: ''
+  },
+  leadSource: {
+    type: String,
+    required: false,
+    default: ''
+  },
+  mailId: {
+    type: String,
+    required: false,
+    default: ''
   },
   agentId: {
     type: String,
