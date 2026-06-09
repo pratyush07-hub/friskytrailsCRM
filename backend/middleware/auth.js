@@ -4,22 +4,17 @@ const config = require('../config');
 const JWT_SECRET = config.JWT_SECRET;
 
 module.exports = function (req, res, next) {
-  let token = req.cookies ? req.cookies.token : null;
-
-  // Fallback to Authorization header if cookie is not present
-  if (!token) {
-    const authHeader = req.header('Authorization');
-    if (authHeader) {
-      const parts = authHeader.split(' ');
-      if (parts.length === 2 && parts[0] === 'Bearer') {
-        token = parts[1];
-      }
-    }
-  }
-
-  if (!token) {
+  const authHeader = req.header('Authorization');
+  if (!authHeader) {
     return res.status(401).json({ error: "No token, authorization denied" });
   }
+
+  const parts = authHeader.split(' ');
+  if (parts.length !== 2 || parts[0] !== 'Bearer') {
+    return res.status(401).json({ error: "Token format is invalid" });
+  }
+
+  const token = parts[1];
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);

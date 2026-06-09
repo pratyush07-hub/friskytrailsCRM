@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 
-export default function Login({ setUser, API_URL }) {
+export default function Login({ setToken, setUser, API_URL }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -16,11 +16,13 @@ export default function Login({ setUser, API_URL }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
-        credentials: 'include'
       });
       const data = await res.json();
 
       if (res.ok) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        setToken(data.token);
         setUser(data.user);
         toast.success(`Welcome back, ${data.user.name}!`);
       } else {

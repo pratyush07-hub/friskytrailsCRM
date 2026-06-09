@@ -14,8 +14,11 @@ const API_URL = `${import.meta.env.VITE_API_URL}`;
 function App() {
   const [leads, setLeads] = useState([]);
   const [agents, setAgents] = useState([]);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState(() => localStorage.getItem('token') || '');
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('user');
+    return saved ? JSON.parse(saved) : null;
+  });
 
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem('darkMode') === 'true';
@@ -31,48 +34,24 @@ function App() {
     }
   }, [darkMode]);
 
-  // Check auth session on mount
-  useEffect(() => {
-    async function checkAuth() {
-      try {
-        const res = await fetch(`${API_URL}/auth/me`, {
-          credentials: 'include'
-        });
-        if (res.ok) {
-          const userData = await res.json();
-          setUser(userData);
-        }
-      } catch (error) {
-        console.error("Auth check failed:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    checkAuth();
-  }, []);
-  const handleLogout = async () => {
-    try {
-      await fetch(`${API_URL}/auth/logout`, {
-        method: 'POST',
-        credentials: 'include'
-      });
-    } catch (error) {
-      console.error("Logout request failed:", error);
-    }
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setToken('');
     setUser(null);
   };
 
-  // Fetch all leads and agents on component mount or user login update
+  // Fetch all leads and agents on component mount or token update
   useEffect(() => {
-    if (!user) return;
+    if (!token) return;
     async function fetchData() {
       try {
         const [leadsRes, agentsRes] = await Promise.all([
           fetch(`${API_URL}/leads`, {
-            credentials: 'include'
+            headers: { 'Authorization': `Bearer ${token}` }
           }),
           fetch(`${API_URL}/agents`, {
-            credentials: 'include'
+            headers: { 'Authorization': `Bearer ${token}` }
           })
         ]);
         if (leadsRes.ok && agentsRes.ok) {
@@ -81,7 +60,7 @@ function App() {
           setLeads(leadsData);
           setAgents(agentsData);
         } else {
-          // If session expired or invalid
+          // If token expired or invalid
           if (leadsRes.status === 401 || agentsRes.status === 401) {
             handleLogout();
             toast.error("Session expired. Please log in again.");
@@ -95,11 +74,12 @@ function App() {
       }
     }
     fetchData();
-  }, [user]);
+  }, [token]);
 
   const getAuthHeaders = () => {
     return {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
     };
   };
 
@@ -109,7 +89,6 @@ function App() {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify(newLead),
-        credentials: 'include'
       });
       if (response.ok) {
         const savedLead = await response.json();
@@ -133,7 +112,6 @@ function App() {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify({ agentId }),
-        credentials: 'include'
       });
       if (response.ok) {
         const updatedLead = await response.json();
@@ -158,7 +136,6 @@ function App() {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({ text: noteText }),
-        credentials: 'include'
       });
       if (response.ok) {
         const updatedLead = await response.json();
@@ -178,7 +155,6 @@ function App() {
       const response = await fetch(`${API_URL}/leads/${leadId}/notes/${noteId}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
-        credentials: 'include'
       });
       if (response.ok) {
         const updatedLead = await response.json();
@@ -200,7 +176,6 @@ function App() {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify(updatedLead),
-        credentials: 'include'
       });
       if (response.ok) {
         const savedLead = await response.json();
@@ -218,19 +193,8 @@ function App() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white font-semibold">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-          <span>Authenticating...</span>
-        </div>
-      </div>
-    );
-  }
-
   // If not logged in, intercept and show Login Page
-  if (!user) {
+  if (!token) {
     return (
       <Router>
         <div className="min-h-screen">
@@ -238,7 +202,7 @@ function App() {
           <Toaster position='top-center' />
           <main>
             <Routes>
-              <Route path="*" element={<Login setUser={setUser} API_URL={API_URL} />} />
+              <Route path="*" element={<Login setToken={setToken} setUser={setUser} API_URL={API_URL} />} />
             </Routes>
           </main>
         </div>
