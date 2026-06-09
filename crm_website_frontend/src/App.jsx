@@ -9,7 +9,7 @@ import AddAgent from './pages/AddAgent';
 import Login from './pages/Login';
 import './index.css';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = `${import.meta.env.VITE_API_URL}`;
 
 function App() {
   const [leads, setLeads] = useState([]);
