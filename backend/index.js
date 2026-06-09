@@ -9,13 +9,16 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Mount API routes under /api prefix
-app.use('/api', apiRoutes);
-
-// Connect to database
-connectDB().catch((error) => {
-  console.error("Critical database connection failure:", error);
-});
+// Ensure database is connected before handling API routes
+app.use('/api', async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    console.error("Critical database connection failure:", error);
+    res.status(500).json({ error: "Database connection failed. Check your MongoDB Atlas IP Access List." });
+  }
+}, apiRoutes);
 
 // Start server if run directly (e.g. node index.js)
 if (require.main === module) {
