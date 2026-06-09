@@ -1,6 +1,32 @@
 import { useState } from 'react';
 
-export default function MyLeads({ leads, addNote, deleteNote, user }) {
+const getNoteDisplayDate = (note) => {
+  if (!note || !note.timestamp) return 'Unknown time';
+  // If the timestamp already has a date format (contains a comma), use it
+  if (note.timestamp.includes(',')) {
+    return note.timestamp;
+  }
+
+  // Fallback: extract date from Mongoose ObjectId (24 hex characters)
+  const idStr = note.id || note._id;
+  if (idStr && idStr.length === 24) {
+    try {
+      const timestamp = parseInt(idStr.substring(0, 8), 16) * 1000;
+      if (!isNaN(timestamp)) {
+        const date = new Date(timestamp);
+        const dateStr = date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+        const timeStr = note.timestamp.trim();
+        return `${dateStr}, ${timeStr}`;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  return note.timestamp;
+};
+
+export default function MyLeads({ leads, addNote, deleteNote, user, loading }) {
   const [viewMode, setViewMode] = useState('card');
   const [noteInputs, setNoteInputs] = useState({});
   const [expandedNotes, setExpandedNotes] = useState({});
@@ -135,7 +161,12 @@ export default function MyLeads({ leads, addNote, deleteNote, user }) {
         </div>
       </div>
 
-      {myLeads.length === 0 ? (
+      {loading ? (
+        <div className="mt-8 flex flex-col items-center justify-center py-16 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700">
+          <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-4 text-sm font-semibold text-gray-500 dark:text-slate-400">Loading your leads...</p>
+        </div>
+      ) : myLeads.length === 0 ? (
         <div className="mt-8 text-center py-16 bg-white rounded-xl shadow-sm border border-gray-100">
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -223,7 +254,7 @@ export default function MyLeads({ leads, addNote, deleteNote, user }) {
                                   <div className="flex justify-between font-semibold text-[10px] text-gray-500 dark:text-gray-400">
                                     <span className={isMyNote ? 'text-blue-600 dark:text-blue-400' : 'dark:text-gray-300'}>{note.author} {isMyNote && '(You)'}</span>
                                     <div className="flex items-center space-x-1.5">
-                                      <span>{note.timestamp}</span>
+                                      <span>{getNoteDisplayDate(note)}</span>
                                       {isMyNote && (
                                         <button 
                                           onClick={() => deleteNote(lead.id, note.id || note._id)} 
@@ -347,7 +378,7 @@ export default function MyLeads({ leads, addNote, deleteNote, user }) {
                                 <div className="flex justify-between font-semibold text-[10px] text-gray-500 dark:text-gray-400">
                                   <span className={isMyNote ? 'text-blue-600 dark:text-blue-400' : 'dark:text-gray-300'}>{note.author} {isMyNote && '(You)'}</span>
                                   <div className="flex items-center space-x-1.5">
-                                    <span>{note.timestamp}</span>
+                                    <span>{getNoteDisplayDate(note)}</span>
                                     {isMyNote && (
                                       <button 
                                         onClick={() => deleteNote(lead.id, note.id || note._id)} 

@@ -19,6 +19,7 @@ function App() {
     const saved = localStorage.getItem('user');
     return saved ? JSON.parse(saved) : null;
   });
+  const [loadingData, setLoadingData] = useState(true);
 
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem('darkMode') === 'true';
@@ -43,8 +44,12 @@ function App() {
 
   // Fetch all leads and agents on component mount or token update
   useEffect(() => {
-    if (!token) return;
+    if (!token) {
+      setLoadingData(false);
+      return;
+    }
     async function fetchData() {
+      setLoadingData(true);
       try {
         const [leadsRes, agentsRes] = await Promise.all([
           fetch(`${API_URL}/leads`, {
@@ -71,6 +76,8 @@ function App() {
       } catch (error) {
         console.error("Fetch error:", error);
         toast.error("Could not connect to backend server");
+      } finally {
+        setLoadingData(false);
       }
     }
     fetchData();
@@ -219,11 +226,11 @@ function App() {
           <Routes>
             <Route
               path="/"
-              element={<Dashboard leads={leads} agents={agents} assignAgent={assignAgent} addNote={addNote} deleteNote={deleteNote} updateLead={updateLead} user={user} />}
+              element={<Dashboard leads={leads} agents={agents} assignAgent={assignAgent} addNote={addNote} deleteNote={deleteNote} updateLead={updateLead} user={user} loading={loadingData} />}
             />
             <Route
               path="/my-leads"
-              element={!user.isAdmin ? <MyLeads leads={leads} addNote={addNote} deleteNote={deleteNote} user={user} /> : <Navigate to="/" replace />}
+              element={!user.isAdmin ? <MyLeads leads={leads} addNote={addNote} deleteNote={deleteNote} user={user} loading={loadingData} /> : <Navigate to="/" replace />}
             />
             <Route
               path="/add-lead"
