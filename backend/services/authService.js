@@ -108,9 +108,40 @@ async function updatePassword(userId, currentPassword, newPassword) {
   await user.save();
 }
 
+async function updateProfile(userId, name, email) {
+  if (!name || !email) {
+    throw new Error("Name and email are required");
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  // Check if email is already taken by another user
+  if (email.toLowerCase() !== user.email) {
+    const existing = await User.findByEmail(email);
+    if (existing && existing._id.toString() !== userId) {
+      throw new Error("Email is already in use");
+    }
+  }
+
+  user.name = name;
+  user.email = email.toLowerCase();
+  await user.save();
+
+  return {
+    id: user._id.toString(),
+    name: user.name,
+    email: user.email,
+    isAdmin: !!user.isAdmin
+  };
+}
+
 module.exports = {
   register,
   login,
   getProfile,
-  updatePassword
+  updatePassword,
+  updateProfile
 };

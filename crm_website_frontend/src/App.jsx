@@ -247,7 +247,7 @@ function App() {
               element={<LeadDetail API_URL={API_URL} token={token} user={user} leads={leads} setLeads={setLeads} />} />
             <Route
               path="/profile"
-              element={<Profile user={user} />} />
+              element={<Profile user={user} setUser={setUser} token={token} API_URL={API_URL} />} />
             {/* Redirect any other path to dashboard */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

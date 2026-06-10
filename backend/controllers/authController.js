@@ -39,9 +39,20 @@ async function updatePassword(req, res) {
   }
 }
 
+async function updateProfile(req, res) {
+  try {
+    const { name, email } = req.body;
+    const updatedUser = await authService.updateProfile(req.user.userId, name, email);
+    res.json({ message: "Profile updated successfully", user: updatedUser });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+}
+
 module.exports = {
   register,
   login,
   getProfile,
-  updatePassword
+  updatePassword,
+  updateProfile
 };
