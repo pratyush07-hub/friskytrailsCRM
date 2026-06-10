@@ -29,8 +29,19 @@ async function getProfile(req, res) {
   }
 }
 
+async function updatePassword(req, res) {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    await authService.updatePassword(req.user.userId, currentPassword, newPassword);
+    res.json({ message: "Password updated successfully" });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+}
+
 module.exports = {
   register,
   login,
-  getProfile
+  getProfile,
+  updatePassword
 };

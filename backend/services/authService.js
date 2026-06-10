@@ -88,8 +88,29 @@ async function getProfile(userId) {
   };
 }
 
+async function updatePassword(userId, currentPassword, newPassword) {
+  if (!currentPassword || !newPassword) {
+    throw new Error("Current and new passwords are required");
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const isMatch = await bcrypt.compare(currentPassword, user.password);
+  if (!isMatch) {
+    throw new Error("Incorrect current password");
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  user.password = await bcrypt.hash(newPassword, salt);
+  await user.save();
+}
+
 module.exports = {
   register,
   login,
-  getProfile
+  getProfile,
+  updatePassword
 };
