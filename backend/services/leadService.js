@@ -73,9 +73,9 @@ async function assignLead(id, agentId) {
   return formatDoc(result);
 }
 
-async function addNote(id, text, userId) {
-  if (!text || !text.trim()) {
-    throw new Error("Note text is required");
+async function addNote(id, text, userId, imageUrl) {
+  if ((!text || !text.trim()) && !imageUrl) {
+    throw new Error("Note text or image is required");
   }
 
   const lead = await Lead.findById(id);
@@ -93,10 +93,11 @@ async function addNote(id, text, userId) {
 
   const newNote = {
     id: new mongoose.Types.ObjectId().toString(),
-    text: text.trim(),
+    text: (text || '').trim(),
     timestamp: new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' }),
     author,
-    authorId: userId || null
+    authorId: userId || null,
+    imageUrl: imageUrl || null
   };
 
   const result = await Lead.pushNote(id, newNote);
@@ -111,11 +112,45 @@ async function deleteNote(id, noteId) {
   return formatDoc(result);
 }
 
+async function getLeadById(id) {
+  const lead = await Lead.findById(id);
+  if (!lead) {
+    throw new Error("Lead not found");
+  }
+  return formatDoc(lead);
+}
+
+async function updateLabels(id, labels) {
+  const result = await Lead.updateLead(id, { labels: labels || [] });
+  if (!result) {
+    throw new Error("Lead not found");
+  }
+  return formatDoc(result);
+}
+
+async function updateDates(id, dates) {
+  const updateData = {};
+  if (dates.startDate !== undefined) {
+    updateData['dates.startDate'] = dates.startDate ? new Date(dates.startDate) : null;
+  }
+  if (dates.dueDate !== undefined) {
+    updateData['dates.dueDate'] = dates.dueDate ? new Date(dates.dueDate) : null;
+  }
+  const result = await Lead.updateLead(id, updateData);
+  if (!result) {
+    throw new Error("Lead not found");
+  }
+  return formatDoc(result);
+}
+
 module.exports = {
   getLeads,
   createLead,
   updateLead,
   assignLead,
   addNote,
-  deleteNote
+  deleteNote,
+  getLeadById,
+  updateLabels,
+  updateDates
 };

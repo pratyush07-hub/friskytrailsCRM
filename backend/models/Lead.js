@@ -20,6 +20,10 @@ const NoteSchema = new mongoose.Schema({
   authorId: {
     type: String,
     required: false
+  },
+  imageUrl: {
+    type: String,
+    required: false
   }
 });
 
@@ -61,11 +65,19 @@ const LeadSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  labels: {
+    type: [String],
+    default: []
+  },
+  dates: {
+    startDate: { type: Date, default: null },
+    dueDate: { type: Date, default: null }
+  },
   notes: {
     type: [NoteSchema],
     default: []
   }
-});
+}, { timestamps: true });
 
 const Lead = mongoose.model('Lead', LeadSchema);
 
