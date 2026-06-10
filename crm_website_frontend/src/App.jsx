@@ -243,7 +243,7 @@ function App() {
             />
             <Route
               path="/leads/:id"
-              element={<LeadDetail API_URL={API_URL} token={token} user={user} leads={leads} setLeads={setLeads} />} />
+              element={<LeadDetail API_URL={API_URL} token={token} user={user} leads={leads} setLeads={setLeads} agents={agents} />} />
             {/* Redirect any other path to dashboard */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

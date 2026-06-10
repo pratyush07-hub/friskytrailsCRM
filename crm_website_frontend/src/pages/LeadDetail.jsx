@@ -29,7 +29,7 @@ const getNoteDisplayDate = (note) => {
   return note.timestamp;
 };
 
-export default function LeadDetail({ API_URL, token, user, leads, setLeads }) {
+export default function LeadDetail({ API_URL, token, user, leads, setLeads, agents }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const [lead, setLead] = useState(null);
@@ -218,6 +218,7 @@ export default function LeadDetail({ API_URL, token, user, leads, setLeads }) {
   }
 
   const activeLabels = lead.labels || [];
+  const assignedAgent = agents?.find(a => a.id === lead.agentId);
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -289,11 +290,22 @@ export default function LeadDetail({ API_URL, token, user, leads, setLeads }) {
           </div>
           <div className="hidden sm:block flex-1"></div>
         </div>
-        {lead.leadSource && (
-          <span className="inline-flex items-center mt-3 px-2.5 py-0.5 rounded-md text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100/30">
-            Source: {lead.leadSource}
-          </span>
-        )}
+        <div className="flex flex-wrap gap-2 mt-4">
+          {lead.leadSource && (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100/30">
+              Source: {lead.leadSource}
+            </span>
+          )}
+          {assignedAgent ? (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-semibold bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-400 border border-orange-100/30">
+              👤 Assigned to: {assignedAgent.name}
+            </span>
+          ) : (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-semibold bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-slate-400 border border-transparent">
+              👤 Unassigned
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Two-section layout */}
