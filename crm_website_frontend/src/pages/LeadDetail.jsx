@@ -297,7 +297,7 @@ export default function LeadDetail({ API_URL, token, user, leads, setLeads, agen
             </span>
           )}
           {assignedAgent ? (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-semibold bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-400 border border-orange-100/30">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[12px] font-semibold bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-400 border border-orange-100/30">
               👤 Assigned to: {assignedAgent.name}
             </span>
           ) : (
