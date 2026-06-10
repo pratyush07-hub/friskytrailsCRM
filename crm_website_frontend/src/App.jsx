@@ -8,6 +8,7 @@ import AddLead from './pages/AddLead';
 import AddAgent from './pages/AddAgent';
 import Login from './pages/Login';
 import LeadDetail from "./pages/LeadDetail";
+import Profile from './pages/Profile';
 import './index.css';
 
 const API_URL = `${import.meta.env.VITE_API_URL}`;
@@ -244,6 +245,9 @@ function App() {
             <Route
               path="/leads/:id"
               element={<LeadDetail API_URL={API_URL} token={token} user={user} leads={leads} setLeads={setLeads} />} />
+            <Route
+              path="/profile"
+              element={<Profile user={user} />} />
             {/* Redirect any other path to dashboard */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

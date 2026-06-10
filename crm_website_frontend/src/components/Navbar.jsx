@@ -82,9 +82,9 @@ export default function Navbar({ darkMode, setDarkMode, user, handleLogout }) {
                     {user.isAdmin ? 'Admin' : 'Agent'}
                   </span>
                 </div>
-                <span className="inline-flex items-center justify-center h-8 w-8 rounded-xl bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-400 font-bold border border-orange-200/50 dark:border-orange-900/50 shadow-sm text-sm">
+                <Link to="/profile" className="inline-flex items-center justify-center h-8 w-8 rounded-xl bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-400 font-bold border border-orange-200/50 dark:border-orange-900/50 shadow-sm text-sm hover:ring-2 hover:ring-orange-500 transition-all cursor-pointer">
                   {user.name.split(' ').map(n => n[0]).join('')}
-                </span>
+                </Link>
                 <div className="h-4 w-[1px] bg-gray-200 dark:bg-slate-700"></div>
                 <button
                   onClick={handleLogout}
@@ -149,8 +149,8 @@ export default function Navbar({ darkMode, setDarkMode, user, handleLogout }) {
             
             {/* User Profile and Logout section in mobile menu */}
             <div className="pt-4 mt-3 border-t border-gray-100 dark:border-slate-800 flex flex-col gap-3">
-              <div className="flex items-center space-x-3 px-2">
-                <span className="inline-flex items-center justify-center h-9 w-9 rounded-xl bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-400 font-bold border border-orange-200/50 dark:border-orange-900/50 shadow-sm text-sm">
+              <Link to="/profile" onClick={() => setIsOpen(false)} className="flex items-center space-x-3 px-2 group">
+                <span className="inline-flex items-center justify-center h-9 w-9 rounded-xl bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-400 font-bold border border-orange-200/50 dark:border-orange-900/50 shadow-sm text-sm group-hover:ring-2 group-hover:ring-orange-500 transition-all cursor-pointer">
                   {user.name.split(' ').map(n => n[0]).join('')}
                 </span>
                 <div className="flex flex-col">
@@ -161,7 +161,7 @@ export default function Navbar({ darkMode, setDarkMode, user, handleLogout }) {
                     {user.isAdmin ? 'Admin' : 'Agent'}
                   </span>
                 </div>
-              </div>
+              </Link>
               <button
                 onClick={() => {
                   setIsOpen(false);
