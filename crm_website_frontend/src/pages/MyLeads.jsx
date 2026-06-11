@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const getNoteDisplayDate = (note) => {
   if (!note || !note.timestamp) return 'Unknown time';
@@ -29,6 +31,7 @@ const getNoteDisplayDate = (note) => {
 export default function MyLeads({ leads, addNote, deleteNote, user, loading }) {
   const [viewMode, setViewMode] = useState('card');
   const [noteInputs, setNoteInputs] = useState({});
+  const [selectedImages, setSelectedImages] = useState({}); // { [leadId]: 'base64...' }
   const [expandedNotes, setExpandedNotes] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('newest');
@@ -43,11 +46,29 @@ export default function MyLeads({ leads, addNote, deleteNote, user, loading }) {
     }));
   };
 
+  const handleImageChange = (leadId, e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Image size must be less than 2MB");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setSelectedImages(prev => ({ ...prev, [leadId]: reader.result }));
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSendNote = (leadId) => {
-    const text = noteInputs[leadId];
-    if (!text || !text.trim()) return;
-    addNote(leadId, text.trim());
+    const text = noteInputs[leadId] || '';
+    const image = selectedImages[leadId] || '';
+    if (!text.trim() && !image) return;
+    addNote(leadId, text.trim(), image);
     setNoteInputs(prev => ({ ...prev, [leadId]: '' }));
+    setSelectedImages(prev => ({ ...prev, [leadId]: '' }));
   };
 
   // Metrics for My Leads
@@ -196,18 +217,28 @@ export default function MyLeads({ leads, addNote, deleteNote, user, loading }) {
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="flex items-center space-x-2">
-                        <h3 className="text-lg font-bold text-gray-950 group-hover:text-orange-600 transition-colors">
-                          {lead.name || 'Unnamed Lead'}
+                        <h3 className="text-lg font-bold transition-colors">
+                          <Link to={`/leads/${lead.id}`} className="text-orange-600 hover:text-orange-800 underline decoration-orange-300/50 hover:decoration-orange-800 flex items-center gap-1.5 group">
+                            <span>{lead.name || 'Unnamed Lead'}</span>
+                            <svg className="w-4 h-4 text-orange-400 group-hover:text-orange-800 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                          </Link>
                         </h3>
                       </div>
                       <span className="text-xs text-gray-500 block mt-0.5">
                         {lead.phone} {lead.mailId && `• ${lead.mailId}`}
                       </span>
-                      {lead.leadSource && (
-                        <span className="inline-flex items-center mt-1.5 px-2 py-0.5 rounded-md text-[10px] font-medium bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-100/30">
-                          Source: {lead.leadSource}
+                      <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                        {lead.leadSource && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-100/30">
+                            Source: {lead.leadSource}
+                          </span>
+                        )}
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-400 border border-orange-100/30">
+                          👤 Assigned to You
                         </span>
-                      )}
+                      </div>
                     </div>
                     {lead.age && (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-400">
@@ -250,9 +281,9 @@ export default function MyLeads({ leads, addNote, deleteNote, user, loading }) {
                             lead.notes.map((note) => {
                               const isMyNote = note.authorId ? note.authorId === user.id : note.author === user.name;
                               return (
-                                <div key={note.id || note._id} className={`${isMyNote ? 'bg-blue-50/60 border border-blue-100/50 dark:bg-blue-900/30 dark:border-blue-800/50' : 'bg-gray-50 border border-transparent dark:bg-slate-800/50'} p-2 rounded-lg text-xs transition-colors`}>
+                                <div key={note.id || note._id} className={`${isMyNote ? 'bg-blue-50/60 border border-blue-100/50 dark:bg-orange-950/40 dark:border-orange-900/50' : 'bg-gray-50 border border-transparent dark:bg-slate-800/50'} p-2 rounded-lg text-xs transition-colors`}>
                                   <div className="flex justify-between font-semibold text-[10px] text-gray-500 dark:text-gray-400">
-                                    <span className={isMyNote ? 'text-blue-600 dark:text-blue-400' : 'dark:text-gray-300'}>{note.author} {isMyNote && '(You)'}</span>
+                                    <span className={isMyNote ? 'text-blue-600 dark:text-orange-400' : 'dark:text-gray-300'}>{note.author} {isMyNote && '(You)'}</span>
                                     <div className="flex items-center space-x-1.5">
                                       <span>{getNoteDisplayDate(note)}</span>
                                       {isMyNote && (
@@ -269,12 +300,34 @@ export default function MyLeads({ leads, addNote, deleteNote, user, loading }) {
                                       )}
                                     </div>
                                   </div>
-                                  <p className="text-gray-700 dark:text-slate-200 mt-0.5">{note.text}</p>
+                                  {note.text && <p className="text-gray-700 dark:text-slate-200 mt-0.5">{note.text}</p>}
+                                  {note.imageUrl && (
+                                    <div className="mt-1.5 rounded overflow-hidden max-w-[200px] border border-gray-200/50 dark:border-slate-800">
+                                      <img
+                                        src={note.imageUrl}
+                                        alt="Attachment"
+                                        className="w-full h-auto max-h-[120px] object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                        onClick={() => window.open(note.imageUrl, '_blank')}
+                                      />
+                                    </div>
+                                  )}
                                 </div>
                               );
                             })
                           )}
                         </div>
+                        {selectedImages[lead.id] && (
+                          <div className="relative inline-block mb-1.5 rounded overflow-hidden border border-gray-200 dark:border-slate-700">
+                            <img src={selectedImages[lead.id]} alt="Upload preview" className="h-12 w-auto object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => setSelectedImages(prev => ({ ...prev, [lead.id]: '' }))}
+                              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-bold hover:bg-red-600 transition-colors shadow-sm cursor-pointer"
+                            >
+                              &times;
+                            </button>
+                          </div>
+                        )}
                         <div className="flex items-center space-x-2 mt-2">
                           <input
                             type="text"
@@ -282,11 +335,23 @@ export default function MyLeads({ leads, addNote, deleteNote, user, loading }) {
                             value={noteInputs[lead.id] || ''}
                             onChange={(e) => setNoteInputs({ ...noteInputs, [lead.id]: e.target.value })}
                             onKeyDown={(e) => e.key === 'Enter' && handleSendNote(lead.id)}
-                            className="w-full text-xs py-1.5 px-3 border border-gray-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500"
+                            className="flex-1 text-xs py-1.5 px-3 border border-gray-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500"
                           />
+                          <label className="flex items-center justify-center p-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-600 dark:text-slate-300 rounded-lg cursor-pointer transition-colors border border-gray-200/50 dark:border-slate-700/50">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => handleImageChange(lead.id, e)}
+                              className="hidden"
+                            />
+                          </label>
                           <button
                             onClick={() => handleSendNote(lead.id)}
-                            className="bg-orange-600 hover:bg-orange-700 text-white text-xs px-3 py-1.5 rounded-lg font-semibold cursor-pointer"
+                            className="bg-orange-600 hover:bg-orange-700 text-white text-xs px-3 py-1.5 rounded-lg font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                            disabled={!(noteInputs[lead.id] || '').trim() && !selectedImages[lead.id]}
                           >
                             Send
                           </button>
@@ -313,7 +378,14 @@ export default function MyLeads({ leads, addNote, deleteNote, user, loading }) {
                   <div className="flex items-center space-x-4 min-w-[200px]">
                     <div>
                       <div className="flex items-center space-x-2">
-                        <h3 className="text-base font-bold text-gray-950">{lead.name || 'Unnamed Lead'}</h3>
+                        <h3 className="text-base font-bold transition-colors">
+                          <Link to={`/leads/${lead.id}`} className="text-orange-600 hover:text-orange-800 underline decoration-orange-300/50 hover:decoration-orange-800 flex items-center gap-1.5 group">
+                            <span>{lead.name || 'Unnamed Lead'}</span>
+                            <svg className="w-3.5 h-3.5 text-orange-400 group-hover:text-orange-800 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                          </Link>
+                        </h3>
                       </div>
                       <div className="flex flex-wrap items-center gap-x-2 text-xs text-gray-500 mt-0.5">
                         {lead.age && (
@@ -339,13 +411,13 @@ export default function MyLeads({ leads, addNote, deleteNote, user, loading }) {
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-3 bg-gray-50 rounded-xl px-4 py-2 flex-1 max-w-md">
-                    <div className="text-left flex-1">
+                  <div className="flex items-center space-x-3 bg-gray-50 rounded-xl px-4 py-2 flex-1 max-w-md mx-auto">
+                    <div className="text-center flex-1">
                       <span className="block text-[9px] uppercase tracking-wider text-gray-400 font-semibold">Origin</span>
                       <span className="text-xs font-medium text-gray-800">{lead.origin}</span>
                     </div>
                     <div className="px-2 text-orange-500 font-bold text-sm">➔</div>
-                    <div className="text-left flex-1">
+                    <div className="text-center flex-1">
                       <span className="block text-[9px] uppercase tracking-wider text-gray-400 font-semibold">Destination</span>
                       <span className="text-xs font-medium text-gray-800">{lead.destination}</span>
                     </div>
@@ -374,9 +446,9 @@ export default function MyLeads({ leads, addNote, deleteNote, user, loading }) {
                           lead.notes.map((note) => {
                             const isMyNote = note.authorId ? note.authorId === user.id : note.author === user.name;
                             return (
-                              <div key={note.id || note._id} className={`${isMyNote ? 'bg-blue-50/60 border border-blue-100/50 dark:bg-blue-900/30 dark:border-blue-800/50' : 'bg-gray-50 border border-transparent dark:bg-slate-800/50'} p-2.5 rounded-lg text-xs transition-colors`}>
+                              <div key={note.id || note._id} className={`${isMyNote ? 'bg-blue-50/60 border border-blue-100/50 dark:bg-orange-950/40 dark:border-orange-900/50' : 'bg-gray-50 border border-transparent dark:bg-slate-800/50'} p-2.5 rounded-lg text-xs transition-colors`}>
                                 <div className="flex justify-between font-semibold text-[10px] text-gray-500 dark:text-gray-400">
-                                  <span className={isMyNote ? 'text-blue-600 dark:text-blue-400' : 'dark:text-gray-300'}>{note.author} {isMyNote && '(You)'}</span>
+                                  <span className={isMyNote ? 'text-blue-600 dark:text-orange-400' : 'dark:text-gray-300'}>{note.author} {isMyNote && '(You)'}</span>
                                   <div className="flex items-center space-x-1.5">
                                     <span>{getNoteDisplayDate(note)}</span>
                                     {isMyNote && (
@@ -393,25 +465,63 @@ export default function MyLeads({ leads, addNote, deleteNote, user, loading }) {
                                     )}
                                   </div>
                                 </div>
-                                <p className="text-gray-700 dark:text-slate-200 mt-0.5">{note.text}</p>
+                                {note.text && <p className="text-gray-700 dark:text-slate-200 mt-0.5">{note.text}</p>}
+                                {note.imageUrl && (
+                                  <div className="mt-1.5 rounded overflow-hidden max-w-[200px] border border-gray-200/50 dark:border-slate-800">
+                                    <img
+                                      src={note.imageUrl}
+                                      alt="Attachment"
+                                      className="w-full h-auto max-h-[120px] object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                      onClick={() => window.open(note.imageUrl, '_blank')}
+                                    />
+                                  </div>
+                                )}
                               </div>
                             );
                           })
                         )}
                       </div>
-                      <div className="flex items-start space-x-2">
-                        <textarea
-                          placeholder="Type important information..."
-                          value={noteInputs[lead.id] || ''}
-                          onChange={(e) => setNoteInputs({ ...noteInputs, [lead.id]: e.target.value })}
-                          className="w-full text-xs p-2 border border-gray-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500 resize-none h-16"
-                        />
-                        <button
-                          onClick={() => handleSendNote(lead.id)}
-                          className="bg-orange-600 hover:bg-orange-700 text-white text-xs px-4 py-2 rounded-lg font-semibold h-10 cursor-pointer"
-                        >
-                          Send
-                        </button>
+                      <div className="flex-1 flex flex-col">
+                        {selectedImages[lead.id] && (
+                          <div className="relative inline-block mb-1.5 rounded overflow-hidden border border-gray-200 dark:border-slate-700">
+                            <img src={selectedImages[lead.id]} alt="Upload preview" className="h-12 w-auto object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => setSelectedImages(prev => ({ ...prev, [lead.id]: '' }))}
+                              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-bold hover:bg-red-600 transition-colors shadow-sm cursor-pointer"
+                            >
+                              &times;
+                            </button>
+                          </div>
+                        )}
+                        <div className="flex items-start space-x-2">
+                          <textarea
+                            placeholder="Type important information..."
+                            value={noteInputs[lead.id] || ''}
+                            onChange={(e) => setNoteInputs({ ...noteInputs, [lead.id]: e.target.value })}
+                            className="w-full text-xs p-2 border border-gray-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500 resize-none h-16 bg-white"
+                          />
+                          <div className="flex flex-col space-y-1.5">
+                            <label className="flex items-center justify-center p-2 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-600 dark:text-slate-300 rounded-lg cursor-pointer transition-colors border border-gray-200/50 dark:border-slate-700/50 h-8">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => handleImageChange(lead.id, e)}
+                                className="hidden"
+                              />
+                            </label>
+                            <button
+                              onClick={() => handleSendNote(lead.id)}
+                              disabled={!(noteInputs[lead.id] || '').trim() && !selectedImages[lead.id]}
+                              className="bg-orange-600 hover:bg-orange-700 text-white text-xs px-3 py-1.5 rounded-lg font-semibold h-8 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                            >
+                              Send
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
