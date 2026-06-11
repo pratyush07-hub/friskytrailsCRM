@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const getNoteDisplayDate = (note) => {
   if (!note || !note.timestamp) return 'Unknown time';
@@ -50,7 +51,7 @@ export default function MyLeads({ leads, addNote, deleteNote, user, loading }) {
     if (!file) return;
 
     if (file.size > 2 * 1024 * 1024) {
-      alert("Image size must be less than 2MB");
+      toast.error("Image size must be less than 2MB");
       return;
     }
 

@@ -246,7 +246,7 @@ function App() {
             />
             <Route
               path="/leads/:id"
-              element={<LeadDetail API_URL={API_URL} token={token} user={user} leads={leads} setLeads={setLeads} />} />
+              element={<LeadDetail API_URL={API_URL} token={token} user={user} leads={leads} setLeads={setLeads} agents={agents} />} />
             <Route
               path="/profile"
               element={<Profile user={user} setUser={setUser} token={token} API_URL={API_URL} />} />
