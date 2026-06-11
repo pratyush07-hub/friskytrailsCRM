@@ -7,10 +7,13 @@ export default function AddAgent({ agents = [], setAgents, leads = [], API_URL, 
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Helper to count leads for a specific agent
-  const getAssignedLeadsCount = (agentId) => {
-    return leads.filter(lead => lead.agentId === agentId).length;
-  };
+  // Precompute a map of agentId -> count
+  const agentLeadCounts = leads.reduce((acc, lead) => {
+    if (lead.agentId) {
+      acc[lead.agentId] = (acc[lead.agentId] || 0) + 1;
+    }
+    return acc;
+  }, {});
 
   const handleAddAgent = async (e) => {
     e.preventDefault();
@@ -129,7 +132,7 @@ export default function AddAgent({ agents = [], setAgents, leads = [], API_URL, 
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {agents.map((agent) => {
-                  const count = getAssignedLeadsCount(agent.id);
+                  const count = agentLeadCounts[agent.id] || 0;
                   return (
                     <div key={agent.id} className="flex items-center justify-between p-4 bg-gray-50/60 dark:bg-slate-900/40 hover:bg-gray-50 dark:hover:bg-slate-900/60 transition-colors rounded-xl border border-gray-100 dark:border-slate-800">
                       <div className="flex items-center space-x-3">
