@@ -67,8 +67,6 @@ export default function LeadDetail({ API_URL, token, user, leads, setLeads, agen
   const fetchLead = async () => {
     setLoading(true);
     try {
-   try {
-     const res = await fetch(`${API_URL}/leads/${id}`, {
       const res = await fetch(`${API_URL}/leads/${id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
