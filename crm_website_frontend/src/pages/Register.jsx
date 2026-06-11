@@ -32,11 +32,15 @@ export default function Register({ setToken, setUser, API_URL }) {
       const data = await res.json();
 
       if (res.ok) {
+        if (!data || !data.token || !data.user || !data.user.name) {
+          toast.error('Invalid server response during registration');
+          return;
+        }
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
         setToken(data.token);
         setUser(data.user);
-        toast.success(`Account created! Welcome, ${data.user.name}!`);
+        toast.success(`Account created! Welcome, ${data.user?.name || 'Agent'}!`);
         navigate('/');
       } else {
         toast.error(data.error || 'Registration failed');
