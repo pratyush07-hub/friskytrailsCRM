@@ -7,6 +7,9 @@ import MyLeads from './pages/MyLeads';
 import AddLead from './pages/AddLead';
 import AgentsList from './pages/AgentsList';
 import Login from './pages/Login';
+import LeadDetail from "./pages/LeadDetail";
+import Profile from './pages/Profile';
+import Register from './pages/Register';
 import './index.css';
 
 const API_URL = `${import.meta.env.VITE_API_URL}`;
@@ -137,12 +140,12 @@ function App() {
     }
   };
 
-  const addNote = async (leadId, noteText) => {
+  const addNote = async (leadId, noteText, imageUrl) => {
     try {
       const response = await fetch(`${API_URL}/leads/${leadId}/notes`, {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ text: noteText }),
+        body: JSON.stringify({ text: noteText, imageUrl }),
       });
       if (response.ok) {
         const updatedLead = await response.json();
@@ -209,6 +212,7 @@ function App() {
           <Toaster position='top-center' />
           <main>
             <Routes>
+              <Route path="/register" element={<Register setToken={setToken} setUser={setUser} API_URL={API_URL} />} />
               <Route path="*" element={<Login setToken={setToken} setUser={setUser} API_URL={API_URL} />} />
             </Routes>
           </main>
@@ -240,6 +244,12 @@ function App() {
               path="/agents"
               element={user.isAdmin ? <AgentsList agents={agents} leads={leads} /> : <Navigate to="/" replace />}
             />
+            <Route
+              path="/leads/:id"
+              element={<LeadDetail API_URL={API_URL} token={token} user={user} leads={leads} setLeads={setLeads} agents={agents} />} />
+            <Route
+              path="/profile"
+              element={<Profile user={user} setUser={setUser} token={token} API_URL={API_URL} />} />
             {/* Redirect any other path to dashboard */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

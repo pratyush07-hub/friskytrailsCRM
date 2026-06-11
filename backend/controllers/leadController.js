@@ -53,8 +53,8 @@ async function assignLead(req, res) {
 async function addNote(req, res) {
   try {
     const { id } = req.params;
-    const { text } = req.body;
-    const result = await leadService.addNote(id, text, req.user.userId);
+    const { text, imageUrl } = req.body;
+    const result = await leadService.addNote(id, text, req.user.userId, imageUrl);
     res.status(201).json(result);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -64,7 +64,51 @@ async function addNote(req, res) {
 async function deleteNote(req, res) {
   try {
     const { id, noteId } = req.params;
-    const result = await leadService.deleteNote(id, noteId);
+    const result = await leadService.deleteNote(id, noteId, req.user.userId, req.user.isAdmin);
+    res.json(result);
+  } catch (error) {
+    if (error.message === "Unauthorized to delete this note") {
+      return res.status(403).json({ error: error.message });
+    }
+    if (error.message === "Note not found" || error.message === "Lead not found") {
+      return res.status(404).json({ error: error.message });
+    }
+    res.status(400).json({ error: error.message });
+  }
+}
+
+async function getLead(req, res) {
+  try {
+    const { id } = req.params;
+    const lead = await leadService.getLeadById(id);
+    res.json(lead);
+  } catch (error) {
+    res.status(404).json({ error: error.message });
+  }
+}
+
+async function updateLabels(req, res) {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: "Forbidden: Admin access only" });
+    }
+    const { id } = req.params;
+    const { labels } = req.body;
+    const result = await leadService.updateLabels(id, labels);
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+}
+
+async function updateDates(req, res) {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: "Forbidden: Admin access only" });
+    }
+    const { id } = req.params;
+    const { startDate, dueDate } = req.body;
+    const result = await leadService.updateDates(id, { startDate, dueDate });
     res.json(result);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -77,5 +121,8 @@ module.exports = {
   updateLead,
   assignLead,
   addNote,
-  deleteNote
+  deleteNote,
+  getLead,
+  updateLabels,
+  updateDates
 };
