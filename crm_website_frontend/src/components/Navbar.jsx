@@ -9,7 +9,7 @@ export default function Navbar({ darkMode, setDarkMode, user, handleLogout }) {
     const baseClass = isMobile
       ? "text-sm font-semibold block px-4 py-2.5 rounded-xl transition-all duration-200"
       : "text-sm font-semibold px-3.5 py-2 rounded-xl transition-all duration-200 flex items-center";
-    
+
     return location.pathname === path
       ? `${baseClass} bg-orange-50 text-orange-600 dark:bg-orange-950/40 dark:text-orange-400 shadow-sm`
       : `${baseClass} text-gray-600 dark:text-slate-300 hover:bg-gray-50/80 dark:hover:bg-slate-800/40 hover:text-orange-600 dark:hover:text-orange-400`;
@@ -23,7 +23,7 @@ export default function Navbar({ darkMode, setDarkMode, user, handleLogout }) {
             {/* Brand/Logo */}
             <div className="flex-shrink-0 flex items-center">
               <Link to="/" className="text-xl sm:text-2xl font-extrabold text-orange-600 dark:text-orange-500 tracking-tight flex items-center space-x-3 hover:opacity-90 transition-opacity">
-                <img src="/logo.webp" alt="FriskyTrails Logo" className="h-12 sm:h-14 w-auto dark:invert transition-transform duration-300 hover:rotate-6" />
+                <img src="/logo.webp" alt="FriskyTrails Logo" className="h-15 sm:h-17 w-auto dark:invert transition-transform duration-300 hover:rotate-6" />
                 <span className="hidden xs:inline">FriskyTrails CRM</span>
               </Link>
             </div>
@@ -146,7 +146,7 @@ export default function Navbar({ darkMode, setDarkMode, user, handleLogout }) {
                 </Link>
               </>
             )}
-            
+
             {/* User Profile and Logout section in mobile menu */}
             <div className="pt-4 mt-3 border-t border-gray-100 dark:border-slate-800 flex flex-col gap-3">
               <Link to="/profile" onClick={() => setIsOpen(false)} className="flex items-center space-x-3 px-2 group">
