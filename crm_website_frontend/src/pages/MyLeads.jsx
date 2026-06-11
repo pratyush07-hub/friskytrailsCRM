@@ -146,8 +146,8 @@ export default function MyLeads({ leads, addNote, deleteNote, user, loading }) {
         </div>
       </div>
 
-      {/* Search and Filters Section */}
-      <div className="mt-8 bg-white p-4 rounded-xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 border border-gray-100">
+      {/* Search and Filter Section */}
+      <div className="mt-8 bg-white p-4 rounded-xl shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4 border border-gray-100">
         <div className="relative flex-1">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -374,7 +374,7 @@ export default function MyLeads({ leads, addNote, deleteNote, user, loading }) {
                 key={lead.id}
                 className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 p-5 flex flex-col space-y-4"
               >
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0 sm:space-x-6">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0 lg:space-x-6">
                   <div className="flex items-center space-x-4 min-w-[200px]">
                     <div>
                       <div className="flex items-center space-x-2">
