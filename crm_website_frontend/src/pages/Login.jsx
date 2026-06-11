@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 export default function Login({ setToken, setUser, API_URL }) {
@@ -99,6 +100,15 @@ export default function Login({ setToken, setUser, API_URL }) {
               >
                 {loading ? 'Signing in...' : 'Sign In'}
               </button>
+            </div>
+            
+            <div className="text-center mt-4">
+              <span className="text-sm text-gray-600 dark:text-slate-400">
+                Don't have an account?{' '}
+                <Link to="/register" className="font-semibold text-orange-600 hover:text-orange-500 transition-colors">
+                  Register as Agent
+                </Link>
+              </span>
             </div>
           </form>
         </div>

@@ -9,6 +9,7 @@ import AddAgent from './pages/AddAgent';
 import Login from './pages/Login';
 import LeadDetail from "./pages/LeadDetail";
 import Profile from './pages/Profile';
+import Register from './pages/Register';
 import './index.css';
 
 const API_URL = `${import.meta.env.VITE_API_URL}`;
@@ -211,6 +212,7 @@ function App() {
           <Toaster position='top-center' />
           <main>
             <Routes>
+              <Route path="/register" element={<Register setToken={setToken} setUser={setUser} API_URL={API_URL} />} />
               <Route path="*" element={<Login setToken={setToken} setUser={setUser} API_URL={API_URL} />} />
             </Routes>
           </main>
