@@ -5,7 +5,7 @@ import Navbar from './components/Navbar';
 import Dashboard from './pages/Dashboard';
 import MyLeads from './pages/MyLeads';
 import AddLead from './pages/AddLead';
-import AddAgent from './pages/AddAgent';
+import AgentsList from './pages/AgentsList';
 import Login from './pages/Login';
 import './index.css';
 
@@ -238,7 +238,7 @@ function App() {
             />
             <Route
               path="/agents"
-              element={user.isAdmin ? <AddAgent agents={agents} leads={leads} /> : <Navigate to="/" replace />}
+              element={user.isAdmin ? <AgentsList agents={agents} leads={leads} /> : <Navigate to="/" replace />}
             />
             {/* Redirect any other path to dashboard */}
             <Route path="*" element={<Navigate to="/" replace />} />

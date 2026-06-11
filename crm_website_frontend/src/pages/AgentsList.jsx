@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function AddAgent({ agents = [], leads = [] }) {
+export default function AgentsList({ agents = [], leads = [] }) {
   // Helper to count leads for a specific agent
   const getAssignedLeadsCount = (agentId) => {
     return leads.filter(lead => lead.agentId === agentId).length;
