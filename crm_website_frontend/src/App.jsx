@@ -8,6 +8,7 @@ import AddLead from './pages/AddLead';
 import AddAgent from './pages/AddAgent';
 import Login from './pages/Login';
 import LeadDetail from "./pages/LeadDetail";
+import Profile from './pages/Profile';
 import Register from './pages/Register';
 import './index.css';
 
@@ -246,6 +247,9 @@ function App() {
             <Route
               path="/leads/:id"
               element={<LeadDetail API_URL={API_URL} token={token} user={user} leads={leads} setLeads={setLeads} agents={agents} />} />
+            <Route
+              path="/profile"
+              element={<Profile user={user} setUser={setUser} token={token} API_URL={API_URL} />} />
             {/* Redirect any other path to dashboard */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

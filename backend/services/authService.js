@@ -88,8 +88,60 @@ async function getProfile(userId) {
   };
 }
 
+async function updatePassword(userId, currentPassword, newPassword) {
+  if (!currentPassword || !newPassword) {
+    throw new Error("Current and new passwords are required");
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const isMatch = await bcrypt.compare(currentPassword, user.password);
+  if (!isMatch) {
+    throw new Error("Incorrect current password");
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  user.password = await bcrypt.hash(newPassword, salt);
+  await user.save();
+}
+
+async function updateProfile(userId, name, email) {
+  if (!name || !email) {
+    throw new Error("Name and email are required");
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  // Check if email is already taken by another user
+  if (email.toLowerCase() !== user.email) {
+    const existing = await User.findByEmail(email);
+    if (existing && existing._id.toString() !== userId) {
+      throw new Error("Email is already in use");
+    }
+  }
+
+  user.name = name;
+  user.email = email.toLowerCase();
+  await user.save();
+
+  return {
+    id: user._id.toString(),
+    name: user.name,
+    email: user.email,
+    isAdmin: !!user.isAdmin
+  };
+}
+
 module.exports = {
   register,
   login,
-  getProfile
+  getProfile,
+  updatePassword,
+  updateProfile
 };
