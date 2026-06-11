@@ -93,6 +93,12 @@ export default function LeadDetail({ API_URL, token, user, leads, setLeads, agen
       ? currentLabels.filter(l => l !== labelName)
       : [...currentLabels, labelName];
 
+    // Optimistic update
+    const previousLead = { ...lead };
+    const optimisticLead = { ...lead, labels: newLabels };
+    setLead(optimisticLead);
+    syncLeadToParent(optimisticLead);
+
     try {
       const res = await fetch(`${API_URL}/leads/${id}/labels`, {
         method: 'PUT',
@@ -104,10 +110,16 @@ export default function LeadDetail({ API_URL, token, user, leads, setLeads, agen
         setLead(updated);
         syncLeadToParent(updated);
       } else {
+        // Revert on failure
+        setLead(previousLead);
+        syncLeadToParent(previousLead);
         toast.error('Failed to update labels');
       }
     } catch (error) {
       console.error(error);
+      // Revert on failure
+      setLead(previousLead);
+      syncLeadToParent(previousLead);
       toast.error('Server connection error');
     }
   };
@@ -259,16 +271,18 @@ export default function LeadDetail({ API_URL, token, user, leads, setLeads, agen
                   return (
                     <span key={labelName} className={`inline-flex items-center gap-1 pl-2.5 pr-1 py-0.5 rounded-full text-xs font-semibold border ${labelDef ? labelDef.light : 'bg-gray-100 text-gray-700 border-gray-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'}`}>
                       {labelName}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleToggleLabel(labelName);
-                        }}
-                        className="w-3.5 h-3.5 rounded-full flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-current font-normal text-[10px] cursor-pointer"
-                        title={`Remove ${labelName}`}
-                      >
-                        &times;
-                      </button>
+                      {user?.isAdmin && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleLabel(labelName);
+                          }}
+                          className="w-3.5 h-3.5 rounded-full flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-current font-normal text-[10px] cursor-pointer"
+                          title={`Remove ${labelName}`}
+                        >
+                          &times;
+                        </button>
+                      )}
                     </span>
                   );
                 })}
@@ -319,12 +333,14 @@ export default function LeadDetail({ API_URL, token, user, leads, setLeads, agen
                 <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
                 Labels
               </h2>
-              <button
-                onClick={() => setShowLabelPicker(!showLabelPicker)}
-                className="text-xs text-orange-600 hover:text-orange-700 font-semibold cursor-pointer"
-              >
-                {showLabelPicker ? 'Done' : '+ Edit'}
-              </button>
+              {user?.isAdmin && (
+                <button
+                  onClick={() => setShowLabelPicker(!showLabelPicker)}
+                  className="text-xs text-orange-600 hover:text-orange-700 font-semibold cursor-pointer"
+                >
+                  {showLabelPicker ? 'Done' : '+ Edit'}
+                </button>
+              )}
             </div>
 
             {showLabelPicker && (
@@ -395,7 +411,9 @@ export default function LeadDetail({ API_URL, token, user, leads, setLeads, agen
             )}
 
             {!showLabelPicker && activeLabels.length === 0 && (
-              <p className="text-xs text-gray-400 italic">No labels assigned. Click Edit to add.</p>
+              <p className="text-xs text-gray-400 italic">
+                {user?.isAdmin ? 'No labels assigned. Click Edit to add.' : 'No labels assigned.'}
+              </p>
             )}
 
             {!showLabelPicker && activeLabels.length > 0 && (
@@ -405,16 +423,18 @@ export default function LeadDetail({ API_URL, token, user, leads, setLeads, agen
                   return (
                     <span key={labelName} className={`inline-flex items-center gap-1 pl-3 pr-1.5 py-1 rounded-lg text-xs font-semibold ${labelDef ? `${labelDef.color} ${labelDef.text}` : 'bg-gray-500 dark:bg-slate-700 text-white'}`}>
                       <span>{labelName}</span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleToggleLabel(labelName);
-                        }}
-                        className="w-4 h-4 rounded-md flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-current font-normal text-xs cursor-pointer"
-                        title={`Remove ${labelName}`}
-                      >
-                        &times;
-                      </button>
+                      {user?.isAdmin && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleLabel(labelName);
+                          }}
+                          className="w-4 h-4 rounded-md flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-current font-normal text-xs cursor-pointer"
+                          title={`Remove ${labelName}`}
+                        >
+                          &times;
+                        </button>
+                      )}
                     </span>
                   );
                 })}
@@ -434,11 +454,12 @@ export default function LeadDetail({ API_URL, token, user, leads, setLeads, agen
                 <div className="flex items-center space-x-3">
                   <input
                     type="date"
+                    disabled={!user?.isAdmin}
                     value={formatDate(lead.dates?.startDate)}
                     onChange={(e) => handleUpdateDate('startDate', e.target.value)}
-                    className="flex-1 text-sm py-2 px-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-700 bg-white cursor-pointer"
+                    className="flex-1 text-sm py-2 px-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-700 bg-white cursor-pointer disabled:bg-gray-50 disabled:cursor-not-allowed"
                   />
-                  {lead.dates?.startDate && (
+                  {user?.isAdmin && lead.dates?.startDate && (
                     <button
                       onClick={() => handleUpdateDate('startDate', null)}
                       className="text-xs text-red-400 hover:text-red-600 cursor-pointer font-medium"
@@ -454,11 +475,12 @@ export default function LeadDetail({ API_URL, token, user, leads, setLeads, agen
                 <div className="flex items-center space-x-3">
                   <input
                     type="date"
+                    disabled={!user?.isAdmin}
                     value={formatDate(lead.dates?.dueDate)}
                     onChange={(e) => handleUpdateDate('dueDate', e.target.value)}
-                    className="flex-1 text-sm py-2 px-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-700 bg-white cursor-pointer"
+                    className="flex-1 text-sm py-2 px-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-700 bg-white cursor-pointer disabled:bg-gray-50 disabled:cursor-not-allowed"
                   />
-                  {lead.dates?.dueDate && (
+                  {user?.isAdmin && lead.dates?.dueDate && (
                     <button
                       onClick={() => handleUpdateDate('dueDate', null)}
                       className="text-xs text-red-400 hover:text-red-600 cursor-pointer font-medium"
@@ -561,7 +583,7 @@ export default function LeadDetail({ API_URL, token, user, leads, setLeads, agen
                           </span>
                           <div className="flex items-center space-x-2">
                             <span className="text-[10px] text-gray-400">{getNoteDisplayDate(note)}</span>
-                            {isMyNote && (
+                            {(isMyNote || user?.isAdmin) && (
                               <button
                                 onClick={() => handleDeleteNote(note.id || note._id)}
                                 className="text-red-400 hover:text-red-600 cursor-pointer p-0.5 rounded transition-colors"

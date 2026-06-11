@@ -64,9 +64,15 @@ async function addNote(req, res) {
 async function deleteNote(req, res) {
   try {
     const { id, noteId } = req.params;
-    const result = await leadService.deleteNote(id, noteId);
+    const result = await leadService.deleteNote(id, noteId, req.user.userId, req.user.isAdmin);
     res.json(result);
   } catch (error) {
+    if (error.message === "Unauthorized to delete this note") {
+      return res.status(403).json({ error: error.message });
+    }
+    if (error.message === "Note not found" || error.message === "Lead not found") {
+      return res.status(404).json({ error: error.message });
+    }
     res.status(400).json({ error: error.message });
   }
 }
@@ -83,6 +89,9 @@ async function getLead(req, res) {
 
 async function updateLabels(req, res) {
   try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: "Forbidden: Admin access only" });
+    }
     const { id } = req.params;
     const { labels } = req.body;
     const result = await leadService.updateLabels(id, labels);
@@ -94,6 +103,9 @@ async function updateLabels(req, res) {
 
 async function updateDates(req, res) {
   try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: "Forbidden: Admin access only" });
+    }
     const { id } = req.params;
     const { startDate, dueDate } = req.body;
     const result = await leadService.updateDates(id, { startDate, dueDate });

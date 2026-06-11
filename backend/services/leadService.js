@@ -104,11 +104,22 @@ async function addNote(id, text, userId, imageUrl) {
   return formatDoc(result);
 }
 
-async function deleteNote(id, noteId) {
-  const result = await Lead.deleteNote(id, noteId);
-  if (!result) {
+async function deleteNote(id, noteId, userId, isAdmin) {
+  const lead = await Lead.findById(id);
+  if (!lead) {
     throw new Error("Lead not found");
   }
+
+  const note = lead.notes.find(n => n.id === noteId || (n._id && n._id.toString() === noteId));
+  if (!note) {
+    throw new Error("Note not found");
+  }
+
+  if (!isAdmin && (!note.authorId || note.authorId !== userId)) {
+    throw new Error("Unauthorized to delete this note");
+  }
+
+  const result = await Lead.deleteNote(id, noteId);
   return formatDoc(result);
 }
 
@@ -131,10 +142,26 @@ async function updateLabels(id, labels) {
 async function updateDates(id, dates) {
   const updateData = {};
   if (dates.startDate !== undefined) {
-    updateData['dates.startDate'] = dates.startDate ? new Date(dates.startDate) : null;
+    if (dates.startDate) {
+      const startDate = new Date(dates.startDate);
+      if (isNaN(startDate.getTime())) {
+        throw new Error("Invalid start date");
+      }
+      updateData['dates.startDate'] = startDate;
+    } else {
+      updateData['dates.startDate'] = null;
+    }
   }
   if (dates.dueDate !== undefined) {
-    updateData['dates.dueDate'] = dates.dueDate ? new Date(dates.dueDate) : null;
+    if (dates.dueDate) {
+      const dueDate = new Date(dates.dueDate);
+      if (isNaN(dueDate.getTime())) {
+        throw new Error("Invalid due date");
+      }
+      updateData['dates.dueDate'] = dueDate;
+    } else {
+      updateData['dates.dueDate'] = null;
+    }
   }
   const result = await Lead.updateLead(id, updateData);
   if (!result) {
