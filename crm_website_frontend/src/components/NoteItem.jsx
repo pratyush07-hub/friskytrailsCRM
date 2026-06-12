@@ -55,7 +55,7 @@ export default function NoteItem({ note, leadId, deleteNote, currentUser }) {
             {note.imageUrl.match(/\.(pdf|doc|docx)$/i) || (!note.imageUrl.match(/\.(jpeg|jpg|gif|png|webp)$/i) && note.imageUrl.includes('/raw/upload/')) ? (
               <div
                 className="p-3 bg-gray-100 dark:bg-slate-800 text-sm font-semibold flex items-center cursor-pointer hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
-                onClick={() => window.open(note.imageUrl.includes('res.cloudinary.com') && !note.imageUrl.includes('/raw/upload/') ? note.imageUrl.replace('/upload/', '/upload/fl_attachment/') : note.imageUrl, '_blank')}
+                onClick={() => window.open(note.imageUrl, '_blank')}
               >
                 📄 {decodeURIComponent(note.imageUrl.split('/').pop())}
               </div>

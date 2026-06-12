@@ -599,7 +599,7 @@ export default function LeadDetail({ API_URL, token, user, setLeads, agents }) {
                   <NoteItem
                     key={note.id || note._id}
                     note={note}
-                    leadId={lead._id}
+                    leadId={lead.id}
                     deleteNote={handleDeleteNote}
                     currentUser={user}
                   />

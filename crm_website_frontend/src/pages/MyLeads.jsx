@@ -88,10 +88,12 @@ export default function MyLeads({ leads, addNote, deleteNote, user, loading }) {
         }
       }
 
-      await addNote(leadId, text.trim(), finalImageUrl);
-      setNoteInputs(prev => ({ ...prev, [leadId]: '' }));
-      setSelectedImages(prev => ({ ...prev, [leadId]: '' }));
-      setImageFiles(prev => ({ ...prev, [leadId]: null }));
+      const success = await addNote(leadId, text.trim(), finalImageUrl);
+      if (success) {
+        setNoteInputs(prev => ({ ...prev, [leadId]: '' }));
+        setSelectedImages(prev => ({ ...prev, [leadId]: '' }));
+        setImageFiles(prev => ({ ...prev, [leadId]: null }));
+      }
     } catch {
       toast.error('Failed to send note');
     } finally {

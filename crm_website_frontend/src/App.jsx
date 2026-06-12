@@ -152,12 +152,15 @@ function App() {
         const updatedLead = await response.json();
         setLeads((prev) => prev.map(lead => lead.id === leadId ? updatedLead : lead));
         toast.success("Note added successfully.");
+        return true;
       } else {
         toast.error("Failed to add note.");
+        return false;
       }
     } catch (error) {
       console.error(error);
       toast.error("Server connection error.");
+      return false;
     }
   };
 
