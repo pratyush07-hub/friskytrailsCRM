@@ -48,6 +48,7 @@ function App() {
   // Fetch all leads and agents on component mount or token update
   useEffect(() => {
     if (!token) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoadingData(false);
       return;
     }
@@ -246,7 +247,7 @@ function App() {
             />
             <Route
               path="/leads/:id"
-              element={<LeadDetail API_URL={API_URL} token={token} user={user} leads={leads} setLeads={setLeads} agents={agents} />} />
+              element={<LeadDetail API_URL={API_URL} token={token} user={user} setLeads={setLeads} agents={agents} />} />
             <Route
               path="/profile"
               element={<Profile user={user} setUser={setUser} token={token} API_URL={API_URL} />} />

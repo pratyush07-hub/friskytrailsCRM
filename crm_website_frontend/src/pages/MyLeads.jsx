@@ -4,12 +4,7 @@ import toast from 'react-hot-toast';
 
 const getNoteDisplayDate = (note) => {
   if (!note || !note.timestamp) return 'Unknown time';
-  // If the timestamp already has a date format (contains a comma), use it
-  if (note.timestamp.includes(',')) {
-    return note.timestamp;
-  }
-
-  // Fallback: extract date from Mongoose ObjectId (24 hex characters)
+  if (note.timestamp.includes(',')) return note.timestamp;
   const idStr = note.id || note._id;
   if (idStr && idStr.length === 24) {
     try {
@@ -24,7 +19,6 @@ const getNoteDisplayDate = (note) => {
       // ignore
     }
   }
-
   return note.timestamp;
 };
 
@@ -32,6 +26,8 @@ export default function MyLeads({ leads, addNote, deleteNote, user, loading }) {
   const [viewMode, setViewMode] = useState('card');
   const [noteInputs, setNoteInputs] = useState({});
   const [selectedImages, setSelectedImages] = useState({}); // { [leadId]: 'base64...' }
+  const [imageFiles, setImageFiles] = useState({}); // { [leadId]: File }
+  const [isUploading, setIsUploading] = useState({}); // { [leadId]: boolean }
   const [expandedNotes, setExpandedNotes] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('newest');
@@ -50,25 +46,57 @@ export default function MyLeads({ leads, addNote, deleteNote, user, loading }) {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("Image size must be less than 2MB");
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File size must be less than 5MB");
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setSelectedImages(prev => ({ ...prev, [leadId]: reader.result }));
-    };
-    reader.readAsDataURL(file);
+    setImageFiles(prev => ({ ...prev, [leadId]: file }));
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSelectedImages(prev => ({ ...prev, [leadId]: reader.result }));
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setSelectedImages(prev => ({ ...prev, [leadId]: `DOCUMENT:${file.name}` }));
+    }
   };
 
-  const handleSendNote = (leadId) => {
+  const handleSendNote = async (leadId) => {
     const text = noteInputs[leadId] || '';
-    const image = selectedImages[leadId] || '';
-    if (!text.trim() && !image) return;
-    addNote(leadId, text.trim(), image);
-    setNoteInputs(prev => ({ ...prev, [leadId]: '' }));
-    setSelectedImages(prev => ({ ...prev, [leadId]: '' }));
+    const file = imageFiles[leadId];
+    if (!text.trim() && !file) return;
+
+    setIsUploading(prev => ({ ...prev, [leadId]: true }));
+    try {
+      let finalImageUrl = null;
+      if (file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const uploadRes = await fetch(`${import.meta.env.VITE_API_URL}/upload`, {
+          method: 'POST',
+          body: formData
+        });
+        if (uploadRes.ok) {
+          const uploadData = await uploadRes.json();
+          finalImageUrl = uploadData.fileUrl;
+        } else {
+          toast.error('Failed to upload image');
+          setIsUploading(prev => ({ ...prev, [leadId]: false }));
+          return;
+        }
+      }
+
+      await addNote(leadId, text.trim(), finalImageUrl);
+      setNoteInputs(prev => ({ ...prev, [leadId]: '' }));
+      setSelectedImages(prev => ({ ...prev, [leadId]: '' }));
+      setImageFiles(prev => ({ ...prev, [leadId]: null }));
+    } catch {
+      toast.error('Failed to send note');
+    } finally {
+      setIsUploading(prev => ({ ...prev, [leadId]: false }));
+    }
   };
 
   // Metrics for My Leads
@@ -287,8 +315,8 @@ export default function MyLeads({ leads, addNote, deleteNote, user, loading }) {
                                     <div className="flex items-center space-x-1.5">
                                       <span>{getNoteDisplayDate(note)}</span>
                                       {isMyNote && (
-                                        <button 
-                                          onClick={() => deleteNote(lead.id, note.id || note._id)} 
+                                        <button
+                                          onClick={() => deleteNote(lead.id, note.id || note._id)}
                                           className="text-red-400 hover:text-red-600 dark:hover:text-red-400 cursor-pointer p-0.5 rounded transition-colors"
                                           title="Delete note"
                                         >
@@ -302,13 +330,22 @@ export default function MyLeads({ leads, addNote, deleteNote, user, loading }) {
                                   </div>
                                   {note.text && <p className="text-gray-700 dark:text-slate-200 mt-0.5">{note.text}</p>}
                                   {note.imageUrl && (
-                                    <div className="mt-1.5 rounded overflow-hidden max-w-[200px] border border-gray-200/50 dark:border-slate-800">
-                                      <img
-                                        src={note.imageUrl}
-                                        alt="Attachment"
-                                        className="w-full h-auto max-h-[120px] object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                                        onClick={() => window.open(note.imageUrl, '_blank')}
-                                      />
+                                    <div className="mt-1.5 rounded overflow-hidden max-w-[200px] border border-gray-200/50 dark:border-slate-800 inline-block">
+                                      {note.imageUrl.match(/\.(pdf|doc|docx)$/i) || !note.imageUrl.match(/\.(jpeg|jpg|gif|png|webp)$/i) && note.imageUrl.includes('/raw/upload/') ? (
+                                        <div
+                                          className="p-3 bg-gray-100 dark:bg-slate-800 text-sm font-semibold flex items-center cursor-pointer hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
+                                          onClick={() => window.open(note.imageUrl.includes('res.cloudinary.com') && !note.imageUrl.includes('/raw/upload/') ? note.imageUrl.replace('/upload/', '/upload/fl_attachment/') : note.imageUrl, '_blank')}
+                                        >
+                                          📄 {decodeURIComponent(note.imageUrl.split('/').pop())}
+                                        </div>
+                                      ) : (
+                                        <img
+                                          src={note.imageUrl}
+                                          alt="Attachment"
+                                          className="w-full h-auto max-h-[120px] object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                          onClick={() => window.open(note.imageUrl, '_blank')}
+                                        />
+                                      )}
                                     </div>
                                   )}
                                 </div>
@@ -318,10 +355,19 @@ export default function MyLeads({ leads, addNote, deleteNote, user, loading }) {
                         </div>
                         {selectedImages[lead.id] && (
                           <div className="relative inline-block mb-1.5 rounded overflow-hidden border border-gray-200 dark:border-slate-700">
-                            <img src={selectedImages[lead.id]} alt="Upload preview" className="h-12 w-auto object-cover" />
+                            {selectedImages[lead.id].startsWith('DOCUMENT:') ? (
+                              <div className="p-3 bg-gray-100 dark:bg-slate-800 text-xs font-semibold flex items-center h-12 w-auto min-w-[150px]">
+                                📄 {selectedImages[lead.id].replace('DOCUMENT:', '')}
+                              </div>
+                            ) : (
+                              <img src={selectedImages[lead.id]} alt="Upload preview" className="h-12 w-auto object-cover" />
+                            )}
                             <button
                               type="button"
-                              onClick={() => setSelectedImages(prev => ({ ...prev, [lead.id]: '' }))}
+                              onClick={() => {
+                                setSelectedImages(prev => ({ ...prev, [lead.id]: '' }));
+                                setImageFiles(prev => ({ ...prev, [lead.id]: null }));
+                              }}
                               className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-bold hover:bg-red-600 transition-colors shadow-sm cursor-pointer"
                             >
                               &times;
@@ -339,11 +385,11 @@ export default function MyLeads({ leads, addNote, deleteNote, user, loading }) {
                           />
                           <label className="flex items-center justify-center p-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-600 dark:text-slate-300 rounded-lg cursor-pointer transition-colors border border-gray-200/50 dark:border-slate-700/50">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                             </svg>
                             <input
                               type="file"
-                              accept="image/*"
+                              accept="image/*,.pdf,.doc,.docx"
                               onChange={(e) => handleImageChange(lead.id, e)}
                               className="hidden"
                             />
@@ -351,9 +397,9 @@ export default function MyLeads({ leads, addNote, deleteNote, user, loading }) {
                           <button
                             onClick={() => handleSendNote(lead.id)}
                             className="bg-orange-600 hover:bg-orange-700 text-white text-xs px-3 py-1.5 rounded-lg font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                            disabled={!(noteInputs[lead.id] || '').trim() && !selectedImages[lead.id]}
+                            disabled={(!(noteInputs[lead.id] || '').trim() && !imageFiles[lead.id]) || isUploading[lead.id]}
                           >
-                            Send
+                            {isUploading[lead.id] ? '...' : 'Send'}
                           </button>
                         </div>
                       </div>
@@ -452,8 +498,8 @@ export default function MyLeads({ leads, addNote, deleteNote, user, loading }) {
                                   <div className="flex items-center space-x-1.5">
                                     <span>{getNoteDisplayDate(note)}</span>
                                     {isMyNote && (
-                                      <button 
-                                        onClick={() => deleteNote(lead.id, note.id || note._id)} 
+                                      <button
+                                        onClick={() => deleteNote(lead.id, note.id || note._id)}
                                         className="text-red-400 hover:text-red-600 dark:hover:text-red-400 cursor-pointer p-0.5 rounded transition-colors"
                                         title="Delete note"
                                       >
@@ -467,13 +513,22 @@ export default function MyLeads({ leads, addNote, deleteNote, user, loading }) {
                                 </div>
                                 {note.text && <p className="text-gray-700 dark:text-slate-200 mt-0.5">{note.text}</p>}
                                 {note.imageUrl && (
-                                  <div className="mt-1.5 rounded overflow-hidden max-w-[200px] border border-gray-200/50 dark:border-slate-800">
-                                    <img
-                                      src={note.imageUrl}
-                                      alt="Attachment"
-                                      className="w-full h-auto max-h-[120px] object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                                      onClick={() => window.open(note.imageUrl, '_blank')}
-                                    />
+                                  <div className="mt-1.5 rounded overflow-hidden max-w-[200px] border border-gray-200/50 dark:border-slate-800 inline-block">
+                                    {note.imageUrl.match(/\.(pdf|doc|docx)$/i) || !note.imageUrl.match(/\.(jpeg|jpg|gif|png|webp)$/i) && note.imageUrl.includes('/raw/upload/') ? (
+                                      <div
+                                        className="p-3 bg-gray-100 dark:bg-slate-800 text-sm font-semibold flex items-center cursor-pointer hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
+                                        onClick={() => window.open(note.imageUrl.includes('res.cloudinary.com') && !note.imageUrl.includes('/raw/upload/') ? note.imageUrl.replace('/upload/', '/upload/fl_attachment/') : note.imageUrl, '_blank')}
+                                      >
+                                        📄 {decodeURIComponent(note.imageUrl.split('/').pop())}
+                                      </div>
+                                    ) : (
+                                      <img
+                                        src={note.imageUrl}
+                                        alt="Attachment"
+                                        className="w-full h-auto max-h-[120px] object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                        onClick={() => window.open(note.imageUrl, '_blank')}
+                                      />
+                                    )}
                                   </div>
                                 )}
                               </div>
@@ -487,7 +542,10 @@ export default function MyLeads({ leads, addNote, deleteNote, user, loading }) {
                             <img src={selectedImages[lead.id]} alt="Upload preview" className="h-12 w-auto object-cover" />
                             <button
                               type="button"
-                              onClick={() => setSelectedImages(prev => ({ ...prev, [lead.id]: '' }))}
+                              onClick={() => {
+                                setSelectedImages(prev => ({ ...prev, [lead.id]: '' }));
+                                setImageFiles(prev => ({ ...prev, [lead.id]: null }));
+                              }}
                               className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-bold hover:bg-red-600 transition-colors shadow-sm cursor-pointer"
                             >
                               &times;
@@ -504,21 +562,21 @@ export default function MyLeads({ leads, addNote, deleteNote, user, loading }) {
                           <div className="flex flex-col space-y-1.5">
                             <label className="flex items-center justify-center p-2 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-600 dark:text-slate-300 rounded-lg cursor-pointer transition-colors border border-gray-200/50 dark:border-slate-700/50 h-8">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                               </svg>
                               <input
                                 type="file"
-                                accept="image/*"
+                                accept="image/*,.pdf,.doc,.docx"
                                 onChange={(e) => handleImageChange(lead.id, e)}
                                 className="hidden"
                               />
                             </label>
                             <button
                               onClick={() => handleSendNote(lead.id)}
-                              disabled={!(noteInputs[lead.id] || '').trim() && !selectedImages[lead.id]}
+                              disabled={(!(noteInputs[lead.id] || '').trim() && !imageFiles[lead.id]) || isUploading[lead.id]}
                               className="bg-orange-600 hover:bg-orange-700 text-white text-xs px-3 py-1.5 rounded-lg font-semibold h-8 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                             >
-                              Send
+                              {isUploading[lead.id] ? '...' : 'Send'}
                             </button>
                           </div>
                         </div>

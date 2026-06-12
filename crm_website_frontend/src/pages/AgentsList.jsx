@@ -1,4 +1,4 @@
-import React from 'react';
+
 
 export default function AgentsList({ agents = [], leads = [] }) {
   // Precompute a map of agentId -> count

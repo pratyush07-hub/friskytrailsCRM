@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import NoteItem from '../components/NoteItem';
 
 const PREDEFINED_LABELS = [
   { name: 'Hot Lead', color: 'bg-red-500', text: 'text-white', border: 'border-red-400', light: 'bg-red-50 text-red-700 border-red-200' },
@@ -11,25 +12,7 @@ const PREDEFINED_LABELS = [
   { name: 'Cancelled', color: 'bg-gray-500', text: 'text-white', border: 'border-gray-400', light: 'bg-gray-100 text-gray-700 border-gray-300' },
 ];
 
-const getNoteDisplayDate = (note) => {
-  if (!note || !note.timestamp) return 'Unknown time';
-  if (note.timestamp.includes(',')) return note.timestamp;
-  const idStr = note.id || note._id;
-  if (idStr && idStr.length === 24) {
-    try {
-      const timestamp = parseInt(idStr.substring(0, 8), 16) * 1000;
-      if (!isNaN(timestamp)) {
-        const date = new Date(timestamp);
-        const dateStr = date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-        const timeStr = note.timestamp.trim();
-        return `${dateStr}, ${timeStr}`;
-      }
-    } catch { /* ignore */ }
-  }
-  return note.timestamp;
-};
-
-export default function LeadDetail({ API_URL, token, user, leads, setLeads, agents }) {
+export default function LeadDetail({ API_URL, token, user, setLeads, agents }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const [lead, setLead] = useState(null);
@@ -37,32 +20,35 @@ export default function LeadDetail({ API_URL, token, user, leads, setLeads, agen
   const [noteInput, setNoteInput] = useState('');
   const [showLabelPicker, setShowLabelPicker] = useState(false);
   const [customLabel, setCustomLabel] = useState('');
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null); // base64 preview
+  const [imageFile, setImageFile] = useState(null); // actual file to upload
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("Image size must be less than 2MB");
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File size must be less than 5MB");
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setSelectedImage(reader.result);
-    };
-    reader.readAsDataURL(file);
+    setImageFile(file);
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSelectedImage(reader.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setSelectedImage(`DOCUMENT:${file.name}`);
+    }
   };
 
   const getAuthHeaders = () => ({
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${token}`
   });
-
-  useEffect(() => {
-    fetchLead();
-  }, [id]);
 
   const fetchLead = async () => {
     setLoading(true);
@@ -84,6 +70,12 @@ export default function LeadDetail({ API_URL, token, user, leads, setLeads, agen
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchLead();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   const handleToggleLabel = async (labelName) => {
     if (!lead) return;
@@ -144,14 +136,39 @@ export default function LeadDetail({ API_URL, token, user, leads, setLeads, agen
   };
 
   const handleSendNote = async () => {
-    if (!noteInput.trim() && !selectedImage) return;
+    if (!noteInput.trim() && !imageFile) return;
+    
+    setIsUploading(true);
     try {
+      let finalImageUrl = null;
+      
+      // Upload image first if it exists
+      if (imageFile) {
+        const formData = new FormData();
+        formData.append('file', imageFile);
+        
+        const uploadRes = await fetch(`${API_URL}/upload`, {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (uploadRes.ok) {
+          const uploadData = await uploadRes.json();
+          finalImageUrl = uploadData.fileUrl;
+        } else {
+          toast.error('Failed to upload image to Cloudinary');
+          setIsUploading(false);
+          return;
+        }
+      }
+
+      // Send note with image URL
       const res = await fetch(`${API_URL}/leads/${id}/notes`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({
           text: noteInput.trim(),
-          imageUrl: selectedImage
+          imageUrl: finalImageUrl
         })
       });
       if (res.ok) {
@@ -160,6 +177,7 @@ export default function LeadDetail({ API_URL, token, user, leads, setLeads, agen
         syncLeadToParent(updated);
         setNoteInput('');
         setSelectedImage(null);
+        setImageFile(null);
         toast.success('Note added');
       } else {
         toast.error('Failed to add note');
@@ -167,6 +185,8 @@ export default function LeadDetail({ API_URL, token, user, leads, setLeads, agen
     } catch (error) {
       console.error(error);
       toast.error('Server connection error');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -510,10 +530,19 @@ export default function LeadDetail({ API_URL, token, user, leads, setLeads, agen
               <div className="flex-1">
                 {selectedImage && (
                   <div className="relative inline-block mb-3 rounded-lg overflow-hidden border border-gray-200 dark:border-slate-700">
-                    <img src={selectedImage} alt="Upload preview" className="h-20 w-auto object-cover" />
+                    {selectedImage.startsWith('DOCUMENT:') ? (
+                      <div className="p-4 bg-gray-100 dark:bg-slate-800 text-sm font-semibold flex items-center h-20 w-auto min-w-[200px]">
+                        📄 {selectedImage.replace('DOCUMENT:', '')}
+                      </div>
+                    ) : (
+                      <img src={selectedImage} alt="Upload preview" className="h-20 w-auto object-cover" />
+                    )}
                     <button
                       type="button"
-                      onClick={() => setSelectedImage(null)}
+                      onClick={() => {
+                        setSelectedImage(null);
+                        setImageFile(null);
+                      }}
                       className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold hover:bg-red-600 transition-colors shadow-sm cursor-pointer"
                     >
                       &times;
@@ -536,12 +565,12 @@ export default function LeadDetail({ API_URL, token, user, leads, setLeads, agen
                   <div className="flex items-center space-x-2">
                     <label className="flex items-center space-x-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-600 dark:text-slate-300 rounded-lg text-xs font-semibold cursor-pointer transition-colors border border-gray-200/50 dark:border-slate-700/50">
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                       </svg>
-                      <span>Image</span>
+                      <span>File</span>
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/*,.pdf,.doc,.docx"
                         onChange={handleImageChange}
                         className="hidden"
                       />
@@ -549,10 +578,10 @@ export default function LeadDetail({ API_URL, token, user, leads, setLeads, agen
                   </div>
                   <button
                     onClick={handleSendNote}
-                    disabled={!noteInput.trim() && !selectedImage}
+                    disabled={(!noteInput.trim() && !imageFile) || isUploading}
                     className="bg-orange-600 hover:bg-orange-700 text-white text-xs px-4 py-2 rounded-lg font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                   >
-                    Send
+                    {isUploading ? 'Sending...' : 'Send'}
                   </button>
                 </div>
               </div>
@@ -566,51 +595,15 @@ export default function LeadDetail({ API_URL, token, user, leads, setLeads, agen
                   <p className="text-sm text-gray-400 mt-2">No comments yet. Start the conversation!</p>
                 </div>
               ) : (
-                [...lead.notes].reverse().map((note) => {
-                  const isMyNote = note.authorId ? note.authorId === user?.id : note.author === user?.name;
-                  return (
-                    <div key={note.id || note._id} className={`flex items-start space-x-3 ${isMyNote ? '' : ''}`}>
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isMyNote ? 'bg-blue-100 dark:bg-orange-950' : 'bg-gray-100 dark:bg-slate-800'}`}>
-                        <span className={`text-xs font-bold ${isMyNote ? 'text-blue-600 dark:text-orange-400' : 'text-gray-500 dark:text-slate-400'}`}>
-                          {note.author?.charAt(0)?.toUpperCase() || '?'}
-                        </span>
-                      </div>
-                      <div className={`flex-1 p-3 rounded-lg border text-sm ${isMyNote ? 'bg-blue-50/60 border-blue-100/60 dark:bg-orange-950/40 dark:border-orange-900/50' : 'bg-gray-50 border-gray-100 dark:bg-slate-800/50 dark:border-slate-700/50'}`}>
-                        <div className="flex justify-between items-center mb-1">
-                          <span className={`text-xs font-semibold ${isMyNote ? 'text-blue-600 dark:text-orange-400' : 'text-gray-500 dark:text-slate-400'}`}>
-                            {note.author} {isMyNote && '(You)'}
-                          </span>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-[10px] text-gray-400">{getNoteDisplayDate(note)}</span>
-                            {(isMyNote || user?.isAdmin) && (
-                              <button
-                                onClick={() => handleDeleteNote(note.id || note._id)}
-                                className="text-red-400 hover:text-red-600 cursor-pointer p-0.5 rounded transition-colors"
-                                title="Delete note"
-                              >
-                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                  <polyline points="3 6 5 6 21 6"></polyline>
-                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                </svg>
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                        {note.text && <p className="text-gray-700 dark:text-slate-200">{note.text}</p>}
-                        {note.imageUrl && (
-                          <div className="mt-2.5 rounded-lg overflow-hidden max-w-[280px] border border-gray-200/50 dark:border-slate-800">
-                            <img
-                              src={note.imageUrl}
-                              alt="Attachment"
-                              className="w-full h-auto max-h-[200px] object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                              onClick={() => window.open(note.imageUrl, '_blank')}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
+                [...lead.notes].reverse().map((note) => (
+                  <NoteItem
+                    key={note.id || note._id}
+                    note={note}
+                    leadId={lead._id}
+                    deleteNote={handleDeleteNote}
+                    currentUser={user}
+                  />
+                ))
               )}
             </div>
           </div>
