@@ -23,7 +23,7 @@ export default function Navbar({ darkMode, setDarkMode, user, handleLogout }) {
             {/* Brand/Logo */}
             <div className="flex-shrink-0 flex items-center">
               <Link to="/" className="text-xl sm:text-2xl font-extrabold text-orange-600 dark:text-orange-500 tracking-tight flex items-center space-x-3 hover:opacity-90 transition-opacity">
-                <img src="/logo.webp" alt="FriskyTrails Logo" className="h-15 sm:h-17 w-auto dark:invert transition-transform duration-300 hover:rotate-6" />
+                <img src="/logo.webp" alt="FriskyTrails Logo" className="h-14 sm:h-16 w-auto dark:invert transition-transform duration-300 hover:rotate-6" />
                 <span className="hidden xs:inline">FriskyTrails CRM</span>
               </Link>
             </div>
