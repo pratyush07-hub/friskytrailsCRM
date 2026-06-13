@@ -9,7 +9,7 @@ export default function Navbar({ darkMode, setDarkMode, user, handleLogout }) {
     const baseClass = isMobile
       ? "text-sm font-semibold block px-4 py-2.5 rounded-xl transition-all duration-200"
       : "text-sm font-semibold px-3.5 py-2 rounded-xl transition-all duration-200 flex items-center";
-    
+
     return location.pathname === path
       ? `${baseClass} bg-orange-50 text-orange-600 dark:bg-orange-950/40 dark:text-orange-400 shadow-sm`
       : `${baseClass} text-gray-600 dark:text-slate-300 hover:bg-gray-50/80 dark:hover:bg-slate-800/40 hover:text-orange-600 dark:hover:text-orange-400`;
@@ -22,15 +22,15 @@ export default function Navbar({ darkMode, setDarkMode, user, handleLogout }) {
           <div className="flex items-center">
             {/* Brand/Logo */}
             <div className="flex-shrink-0 flex items-center">
-              <Link to="/" className="text-xl font-extrabold text-orange-600 dark:text-orange-500 tracking-tight flex items-center space-x-2.5 hover:opacity-90 transition-opacity">
-                <img src="/logo.webp" alt="FriskyTrails Logo" className="h-9 w-auto dark:invert transition-transform duration-300 hover:rotate-6" />
+              <Link to="/" className="text-xl sm:text-2xl font-extrabold text-orange-600 dark:text-orange-500 tracking-tight flex items-center space-x-3 hover:opacity-90 transition-opacity">
+                <img src="/logo.webp" alt="FriskyTrails Logo" className="h-14 sm:h-16 w-auto dark:invert transition-transform duration-300 hover:rotate-6" />
                 <span className="hidden xs:inline">FriskyTrails CRM</span>
               </Link>
             </div>
 
             {/* Desktop Navigation Links */}
             {user && (
-              <div className="hidden md:flex ml-8 space-x-1.5 items-center">
+              <div className="hidden lg:flex ml-8 space-x-1.5 items-center">
                 <Link to="/" className={getLinkClass('/')}>
                   Dashboard
                 </Link>
@@ -73,7 +73,7 @@ export default function Navbar({ darkMode, setDarkMode, user, handleLogout }) {
 
             {/* Desktop User Profile / Logout */}
             {user ? (
-              <div className="hidden md:flex items-center space-x-3 bg-gray-50/50 dark:bg-slate-800/30 p-1.5 pl-2.5 pr-2.5 rounded-2xl border border-gray-100/50 dark:border-slate-800/65">
+              <div className="hidden lg:flex items-center space-x-3 bg-gray-50/50 dark:bg-slate-800/30 p-1.5 pl-2.5 pr-2.5 rounded-2xl border border-gray-100/50 dark:border-slate-800/65">
                 <div className="flex flex-col items-end">
                   <span className="text-xs font-bold text-gray-800 dark:text-slate-200">
                     {user.name}
@@ -94,7 +94,7 @@ export default function Navbar({ darkMode, setDarkMode, user, handleLogout }) {
                 </button>
               </div>
             ) : (
-              <span className="hidden md:inline text-xs font-extrabold text-gray-400 dark:text-slate-500 uppercase tracking-wider">
+              <span className="hidden lg:inline text-xs font-extrabold text-gray-400 dark:text-slate-500 uppercase tracking-wider">
                 CRM Portal
               </span>
             )}
@@ -103,7 +103,7 @@ export default function Navbar({ darkMode, setDarkMode, user, handleLogout }) {
             {user && (
               <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="md:hidden p-2.5 rounded-xl text-gray-500 hover:bg-gray-50 dark:text-slate-400 dark:hover:bg-slate-800 border border-gray-100 dark:border-slate-800 transition-all cursor-pointer shadow-sm"
+                className="lg:hidden p-2.5 rounded-xl text-gray-500 hover:bg-gray-50 dark:text-slate-400 dark:hover:bg-slate-800 border border-gray-100 dark:border-slate-800 transition-all cursor-pointer shadow-sm"
                 aria-label="Toggle Navigation Menu"
               >
                 {isOpen ? (
@@ -126,7 +126,7 @@ export default function Navbar({ darkMode, setDarkMode, user, handleLogout }) {
 
       {/* Mobile Collapsible Navigation Menu */}
       {user && isOpen && (
-        <div className="md:hidden bg-white/95 dark:bg-slate-900/95 border-t border-gray-100 dark:border-slate-800/80 backdrop-blur-lg">
+        <div className="lg:hidden bg-white/95 dark:bg-slate-900/95 border-t border-gray-100 dark:border-slate-800/80 backdrop-blur-lg">
           <div className="px-4 pt-2.5 pb-4 space-y-1.5 shadow-inner">
             <Link to="/" onClick={() => setIsOpen(false)} className={getLinkClass('/', true)}>
               Dashboard
@@ -146,7 +146,7 @@ export default function Navbar({ darkMode, setDarkMode, user, handleLogout }) {
                 </Link>
               </>
             )}
-            
+
             {/* User Profile and Logout section in mobile menu */}
             <div className="pt-4 mt-3 border-t border-gray-100 dark:border-slate-800 flex flex-col gap-3">
               <Link to="/profile" onClick={() => setIsOpen(false)} className="flex items-center space-x-3 px-2 group">

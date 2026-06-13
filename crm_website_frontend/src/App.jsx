@@ -5,7 +5,7 @@ import Navbar from './components/Navbar';
 import Dashboard from './pages/Dashboard';
 import MyLeads from './pages/MyLeads';
 import AddLead from './pages/AddLead';
-import AddAgent from './pages/AddAgent';
+import AgentsList from './pages/AgentsList';
 import Login from './pages/Login';
 import LeadDetail from "./pages/LeadDetail";
 import Profile from './pages/Profile';
@@ -242,7 +242,7 @@ function App() {
             />
             <Route
               path="/agents"
-              element={user.isAdmin ? <AddAgent agents={agents} setAgents={setAgents} leads={leads} API_URL={API_URL} token={token} /> : <Navigate to="/" replace />}
+              element={user.isAdmin ? <AgentsList agents={agents} leads={leads} /> : <Navigate to="/" replace />}
             />
             <Route
               path="/leads/:id"
