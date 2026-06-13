@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import toast from 'react-hot-toast';
 
 export default function Profile({ user, setUser, token, API_URL }) {
@@ -35,7 +35,7 @@ export default function Profile({ user, setUser, token, API_URL }) {
       } else {
         toast.error(data.error || "Failed to update profile");
       }
-    } catch (error) {
+    } catch {
       toast.error("Network error while updating profile");
     } finally {
       setProfileLoading(false);
@@ -70,7 +70,7 @@ export default function Profile({ user, setUser, token, API_URL }) {
       } else {
         toast.error(data.error || "Failed to update password");
       }
-    } catch (error) {
+    } catch {
       toast.error("Network error while updating password");
     } finally {
       setLoading(false);

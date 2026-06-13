@@ -1,4 +1,4 @@
-import React from 'react';
+
 
 export default function AgentsList({ agents = [], leads = [] }) {
   // Precompute a map of agentId -> count
@@ -28,7 +28,7 @@ export default function AgentsList({ agents = [], leads = [] }) {
               return (
                 <div key={agent.id} className="flex items-center justify-between p-4 bg-gray-50/60 dark:bg-slate-900/40 hover:bg-gray-50 dark:hover:bg-slate-900/60 transition-colors rounded-xl border border-gray-100 dark:border-slate-800">
                   <div className="flex items-center space-x-3">
-                    <div className="h-10 w-10 rounded-full bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-450 flex items-center justify-center font-bold text-sm border border-orange-200/50 dark:border-orange-900/50">
+                    <div className="h-10 w-10 rounded-full bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400 flex items-center justify-center font-bold text-sm border border-orange-200/50 dark:border-orange-900/50">
                       {(agent.name || '').split(' ').map(n => n?.[0] || '').join('')}
                     </div>
                     <div>
@@ -37,7 +37,7 @@ export default function AgentsList({ agents = [], leads = [] }) {
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${count > 0 ? 'bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-450' : 'bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-400'
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${count > 0 ? 'bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-400' : 'bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-400'
                       }`}>
                       {count} {count === 1 ? 'Lead' : 'Leads'}
                     </span>
