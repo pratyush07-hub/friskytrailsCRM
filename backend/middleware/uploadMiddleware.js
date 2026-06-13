@@ -6,7 +6,6 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'crm_attachments',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'webp'],
     resource_type: 'auto',
     public_id: (req, file) => {
       // Extract original name without the extension
@@ -22,7 +21,17 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ 
   storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'webp'];
+    const dotIndex = file.originalname.lastIndexOf('.');
+    const ext = dotIndex !== -1 ? file.originalname.substring(dotIndex + 1).toLowerCase() : '';
+    if (allowedExtensions.includes(ext)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`File format .${ext || 'unknown'} is not allowed. Allowed formats: ${allowedExtensions.join(', ')}`), false);
+    }
+  }
 });
 
 module.exports = upload;
