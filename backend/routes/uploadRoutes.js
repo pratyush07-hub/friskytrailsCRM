@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const upload = require('../middleware/uploadMiddleware');
+const auth = require('../middleware/auth');
 
 // POST /api/upload
 // Endpoint for uploading a single file. The field name in form-data should be 'file'
-router.post('/', (req, res) => {
+router.post('/', auth, (req, res) => {
   upload.single('file')(req, res, function(err) {
     if (err) {
       console.error('Multer/Cloudinary error:', err);
