@@ -4,18 +4,29 @@ const cloudinary = require('../config/cloudinary');
 
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: {
-    folder: 'crm_attachments',
-    resource_type: 'auto',
-    public_id: (req, file) => {
-      // Extract original name without the extension
-      const originalName = file.originalname.substring(0, file.originalname.lastIndexOf('.')) || file.originalname;
-      // Sanitize special characters to underscores to avoid invalid URL characters
-      const sanitized = originalName.replace(/[^a-zA-Z0-9-_]/g, '_');
-      // Generate a short 6-character random suffix to avoid file collisions
-      const uniqueSuffix = Math.random().toString(36).substring(2, 8);
-      return `${sanitized}_${uniqueSuffix}`;
-    }
+  params: async (req, file) => {
+    // Extract extension
+    const dotIndex = file.originalname.lastIndexOf('.');
+    const ext = dotIndex !== -1 ? file.originalname.substring(dotIndex).toLowerCase() : '';
+    const originalName = dotIndex !== -1 ? file.originalname.substring(0, dotIndex) : file.originalname;
+
+    // Sanitize and generate unique suffix
+    const sanitized = originalName.replace(/[^a-zA-Z0-9-_]/g, '_');
+    const uniqueSuffix = Math.random().toString(36).substring(2, 8);
+
+    // Explicitly define if it is an image or raw document
+    const isImage = ['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext);
+
+    // For raw files (like .docx, .pdf), Cloudinary requires the extension in the public_id to preserve it
+    const publicId = isImage 
+      ? `${sanitized}_${uniqueSuffix}` 
+      : `${sanitized}_${uniqueSuffix}${ext}`;
+
+    return {
+      folder: 'crm_attachments',
+      resource_type: isImage ? 'image' : 'raw',
+      public_id: publicId
+    };
   }
 });
 
