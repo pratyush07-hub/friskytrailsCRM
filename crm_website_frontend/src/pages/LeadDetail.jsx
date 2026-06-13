@@ -190,9 +190,12 @@ export default function LeadDetail({ API_URL, token, user, setLeads, agents }) {
     }
   };
 
-  const handleDeleteNote = async (noteId) => {
+  const handleDeleteNote = async (leadId, noteId) => {
+    // NoteItem passes deleteNote(leadId, note.id || note._id)
+    // Fall back to leadId if only one argument is provided
+    const actualNoteId = noteId || leadId;
     try {
-      const res = await fetch(`${API_URL}/leads/${id}/notes/${noteId}`, {
+      const res = await fetch(`${API_URL}/leads/${id}/notes/${actualNoteId}`, {
         method: 'DELETE',
         headers: getAuthHeaders()
       });
