@@ -29,7 +29,7 @@ export default function AgentsList({ agents = [], leads = [] }) {
                 <div key={agent.id} className="flex items-center justify-between p-4 bg-gray-50/60 dark:bg-slate-900/40 hover:bg-gray-50 dark:hover:bg-slate-900/60 transition-colors rounded-xl border border-gray-100 dark:border-slate-800">
                   <div className="flex items-center space-x-3">
                     <div className="h-10 w-10 rounded-full bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400 flex items-center justify-center font-bold text-sm border border-orange-200/50 dark:border-orange-900/50">
-                      {agent.name.split(' ').map(n => n[0]).join('')}
+                      {(agent.name || '').split(' ').map(n => n?.[0] || '').join('')}
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">{agent.name}</p>
